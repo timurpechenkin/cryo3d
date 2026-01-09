@@ -1,0 +1,100 @@
+caseName: "demo-freezing"
+
+time:
+    dtSeconds: 3600 # шаг расчёта (сек)
+    saveEverySeconds: 21600 # шаг сохранения (сек)
+    totalSeconds: 604800 # длительность расчёта (сек) - неделя
+
+grid:
+    nx: 40
+    ny: 40
+    nz: 20
+    dxMeters: 0.5
+    dyMeters: 0.5
+    dzMeters: 0.5
+
+boundaryConditions:
+    # тип граничного условия (FIRST_KIND, SECOND_KIND, THIRD_KIND)
+    # температура на границе (T, [°C])
+    # поток тепла на границе (q, [Вт/м2])
+    # коэффициент теплообмена на границе (a, [Вт/(м3*К)])
+    definitions:
+        bc_cold_top:
+            type: FIRST_KIND
+            temperature: -15.0
+        bc_warm_bottom:
+            type: FIRST_KIND
+            temperature: 2.0
+    field:
+        faces:
+            Z_MAX:
+                default: bc_cold_top
+                rules: []
+            Z_MIN:
+                default: bc_warm_bottom
+                rules: []
+            X_MAX:
+                default: bc_cold_top
+                rules: []
+            X_MIN:
+                default: bc_cold_top
+                rules: []
+            Y_MAX:
+                default: bc_cold_top
+                rules: []
+            Y_MIN:
+                default: bc_cold_top
+                rules: []
+
+materials:
+    # λth - теплопроводность грунта в талом состоянии [Вт/(м·К)]
+    # λfz - теплопроводность грунта в мёрзлом состоянии [Вт/(м·К)]
+    # Cth - удельная теплоёмкость грунта в талом состоянии [КДж/(м3·К)]
+    # Cfz - удельная теплоёмкость грунта в мёрзлом состоянии [КДж/(м3·К)]
+    # L - удельная теплота фазового перехода [МДж/м3]
+    # Tbf - температура замерзания грунта [°C]
+    definitions:
+        soil1:
+            thermalConductivityThawed: 0.570
+            thermalConductivityFrozen: 2.220
+            heatCapacityThawed: 4200
+            heatCapacityFrozen: 2100
+            phaseTransitionsHeat: 334000
+            freezingTemperature: 0
+        soil2:
+            thermalConductivityThawed: 1.000
+            thermalConductivityFrozen: 2.500
+            heatCapacityThawed: 4500
+            heatCapacityFrozen: 2500
+            phaseTransitionsHeat: 300000
+            freezingTemperature: -1
+    field:
+        default: soil1
+        rules:
+            - name: "right-2-3"
+              selector:
+                  type: BOX
+                  min: [6.666, 0.0, 0.0]
+                  max: [20.0, 20.0, 10.0]
+              value: soil2
+
+temperature:
+    field:
+        default:
+            type: CONSTANT
+            temperature: 2.0
+        rules:
+            - name: "cold-top"
+              selector:
+                  type: Z_RANGE
+                  zMin: 0.0
+                  zMax: 1.0
+              value:
+                  type: CONSTANT
+                  temperature: -2.0
+
+profiles:
+    - name: "centerline"
+      points:
+          - [10.0, 10.0, 0.0]
+          - [10.0, 10.0, 10.0]
