@@ -19,31 +19,31 @@ boundaryConditions:
     # поток тепла на границе (q, [Вт/м2])
     # коэффициент теплообмена на границе (a, [Вт/(м3*К)])
     definitions:
-        bc_cold_top:
+        bc_cold:
             type: FIRST_KIND
             temperature: -15.0
-        bc_warm_bottom:
+        bc_warm:
             type: FIRST_KIND
             temperature: 2.0
     field:
         faces:
             Z_MAX:
-                default: bc_cold_top
+                default: bc_cold
                 rules: []
             Z_MIN:
-                default: bc_warm_bottom
+                default: bc_warm
                 rules: []
             X_MAX:
-                default: bc_cold_top
+                default: bc_cold
                 rules: []
             X_MIN:
-                default: bc_cold_top
+                default: bc_cold
                 rules: []
             Y_MAX:
-                default: bc_cold_top
+                default: bc_cold
                 rules: []
             Y_MIN:
-                default: bc_cold_top
+                default: bc_cold
                 rules: []
 
 materials:
@@ -54,14 +54,14 @@ materials:
     # L - удельная теплота фазового перехода [МДж/м3]
     # Tbf - температура замерзания грунта [°C]
     definitions:
-        soil1:
+        material1:
             thermalConductivityThawed: 0.570
             thermalConductivityFrozen: 2.220
             heatCapacityThawed: 4200
             heatCapacityFrozen: 2100
             phaseTransitionsHeat: 334000
             freezingTemperature: 0
-        soil2:
+        material2:
             thermalConductivityThawed: 1.000
             thermalConductivityFrozen: 2.500
             heatCapacityThawed: 4500
@@ -69,29 +69,29 @@ materials:
             phaseTransitionsHeat: 300000
             freezingTemperature: -1
     field:
-        default: soil1
+        default: material1
         rules:
             - name: "right-2-3"
               selector:
                   type: BOX
                   min: [6.666, 0.0, 0.0]
                   max: [20.0, 20.0, 10.0]
-              value: soil2
+              value: material2
 
 temperature:
     field:
         default:
             type: CONSTANT
-            temperature: 2.0
+            temperature: -2.0
         rules:
-            - name: "cold-top"
+            - name: "warm-top"
               selector:
                   type: Z_RANGE
                   zMin: 0.0
                   zMax: 1.0
               value:
                   type: CONSTANT
-                  temperature: -2.0
+                  temperature: 2.0
 
 profiles:
     - name: "centerline"

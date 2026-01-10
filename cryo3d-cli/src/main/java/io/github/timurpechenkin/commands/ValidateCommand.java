@@ -26,9 +26,9 @@ public class ValidateCommand implements Runnable {
             ValidationResult result = caseValidator.validate(simulationCase);
 
             if (result.isOk()) {
-                System.out.print("OK");
+                System.out.println("OK");
             } else {
-                System.out.print("ERROR: case is invalid");
+                System.out.println("ERROR: case is invalid");
                 for (ValidationError error : result.errors()) {
                     System.out.println(" - " + error.path() + ": " + error.message());
                 }
