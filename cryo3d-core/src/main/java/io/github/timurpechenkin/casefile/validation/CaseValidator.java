@@ -8,6 +8,8 @@ import io.github.timurpechenkin.casefile.SimulationCase;
 import io.github.timurpechenkin.casefile.bc.Face;
 import io.github.timurpechenkin.casefile.common.Field;
 import io.github.timurpechenkin.casefile.common.Rule;
+import io.github.timurpechenkin.casefile.grid.Axis;
+import io.github.timurpechenkin.casefile.grid.Segment;
 import io.github.timurpechenkin.casefile.selector.BoxSelector;
 import io.github.timurpechenkin.casefile.selector.Selector;
 import io.github.timurpechenkin.casefile.selector.ZRangeSelector;
@@ -18,6 +20,7 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 
 public final class CaseValidator {
+    private static final int SCALE = 100;
     private static final int MAX_TEMPERATURE = 1000;
     private static final int MIN_TEMPERATURE = -273;
     private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
@@ -44,22 +47,34 @@ public final class CaseValidator {
         if (simulationCase.grid() == null) {
             result.add("grid", "grid params must not be empty");
         } else {
+            Map<Axis, List<Segment>> axesSegments = simulationCase.grid().axesSegments();
 
-            int nx = simulationCase.grid().nx();
-            int ny = simulationCase.grid().ny();
-            int nz = simulationCase.grid().nz();
+            for (Axis axis : axesSegments.keySet()) {
+                List<Segment> segments = axesSegments.get(axis);
+                if (segments == null || segments.isEmpty()) {
+                    result.add("grid.axes." + axis.name(), "axis segment must not be empty");
+                } else {
+                    int last = 0;
+                    for (int i = 0; i < segments.size(); i++) {
+                        Segment s = segments.get(i);
+                        double from = s.from();
+                        double to = s.to();
+                        double step = s.step();
 
-            double dxMeters = simulationCase.grid().dxMeters();
-            double dyMeters = simulationCase.grid().dyMeters();
-            double dzMeters = simulationCase.grid().dzMeters();
+                        int intFrom = (int) Math.round(from * SCALE);
+                        int intTo = (int) Math.round(to * SCALE);
 
-            int[] nArray = { nx, ny, nz };
-            double[] dArray = { dxMeters, dyMeters, dzMeters };
+                        if (intFrom != last) {
+                            result.add("grid.axes." + axis.name() + ".segments[" + i + "].from",
+                                    "segments must adjoin each other without gaps and overlaps");
+                        }
+                        last = intTo;
 
-            for (int i = 0; i < nArray.length; i++) {
-                double d = dArray[i];
-                if (d > 10 || d < 0.1) {
-                    result.add("grid", "must be between 0.1 and 10");
+                        if (step > 10 || step < 0.1) {
+                            result.add("grid.axes." + axis.name() + ".segments[" + i + "].step",
+                                    "step must be between 0.1 and 10");
+                        }
+                    }
                 }
             }
         }

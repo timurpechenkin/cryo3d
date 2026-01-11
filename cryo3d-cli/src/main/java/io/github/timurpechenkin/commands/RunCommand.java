@@ -29,7 +29,7 @@ public class RunCommand implements Runnable {
             CaseValidator validator = new CaseValidator();
             ValidationResult result = validator.validate(simulationCase);
             if (!result.isOk()) {
-                System.out.print("ERROR: case is invalid:");
+                System.out.println("ERROR: case is invalid:");
                 for (ValidationError error : result.errors()) {
                     System.out.println("- " + error.path() + ": " + error.message());
                 }

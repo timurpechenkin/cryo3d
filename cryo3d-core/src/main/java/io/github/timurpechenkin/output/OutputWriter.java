@@ -5,9 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
-import io.github.timurpechenkin.casefile.GridSettings;
 import io.github.timurpechenkin.casefile.SimulationCase;
-import io.github.timurpechenkin.casefile.TimeSettings;
+import io.github.timurpechenkin.casefile.grid.GridSettings;
+import io.github.timurpechenkin.casefile.time.TimeSettings;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
