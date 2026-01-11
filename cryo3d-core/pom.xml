@@ -23,7 +23,7 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- парсинг YAML -->
+    <!-- парсинг YAML и JSON -->
     <dependency>
       <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
