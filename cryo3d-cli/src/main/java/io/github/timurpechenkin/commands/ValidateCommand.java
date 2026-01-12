@@ -3,7 +3,7 @@ package io.github.timurpechenkin.commands;
 import java.nio.file.Path;
 
 import io.github.timurpechenkin.casefile.CaseLoader;
-import io.github.timurpechenkin.casefile.SimulationCase;
+import io.github.timurpechenkin.casefile.dto.SimulationCase;
 import io.github.timurpechenkin.casefile.validation.CaseValidator;
 import io.github.timurpechenkin.casefile.validation.ValidationError;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;

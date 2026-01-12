@@ -4,25 +4,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.timurpechenkin.casefile.SimulationCase;
-import io.github.timurpechenkin.casefile.bc.Face;
-import io.github.timurpechenkin.casefile.common.Field;
-import io.github.timurpechenkin.casefile.common.Rule;
-import io.github.timurpechenkin.casefile.grid.Axis;
-import io.github.timurpechenkin.casefile.grid.Segment;
-import io.github.timurpechenkin.casefile.selector.BoxSelector;
-import io.github.timurpechenkin.casefile.selector.Selector;
-import io.github.timurpechenkin.casefile.selector.ZRangeSelector;
-import io.github.timurpechenkin.casefile.temperature.ConstantTemperature;
-import io.github.timurpechenkin.casefile.temperature.TemperatureValue;
+import static io.github.timurpechenkin.Constants.*;
+
+import io.github.timurpechenkin.casefile.dto.SimulationCase;
+import io.github.timurpechenkin.casefile.dto.bc.Face;
+import io.github.timurpechenkin.casefile.dto.common.Field;
+import io.github.timurpechenkin.casefile.dto.common.Rule;
+import io.github.timurpechenkin.casefile.dto.grid.Segment;
+import io.github.timurpechenkin.casefile.dto.selector.BoxSelector;
+import io.github.timurpechenkin.casefile.dto.selector.Selector;
+import io.github.timurpechenkin.casefile.dto.selector.ZRangeSelector;
+import io.github.timurpechenkin.casefile.dto.temperature.ConstantTemperature;
+import io.github.timurpechenkin.casefile.dto.temperature.TemperatureValue;
+import io.github.timurpechenkin.geometry.Axis;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 
 public final class CaseValidator {
-    private static final int SCALE = 100;
-    private static final int MAX_TEMPERATURE = 1000;
-    private static final int MIN_TEMPERATURE = -273;
     private static final Validator VALIDATOR = Validation.buildDefaultValidatorFactory().getValidator();
 
     public CaseValidator() {
@@ -63,14 +62,23 @@ public final class CaseValidator {
 
                         int intFrom = (int) Math.round(from * SCALE);
                         int intTo = (int) Math.round(to * SCALE);
+                        int intStep = (int) Math.round(step * SCALE);
 
+                        // Проверка кратности длинны сегмента и шага
+                        if ((intTo - intFrom) % intStep != 0) {
+                            result.add("grid.axes." + axis.name() + ".segments[" + i + "].from",
+                                    "the segment length must be evenly divisible by the step size");
+                        }
+
+                        // Проврека отсутствия наложений и разрывов + первый сегмент начинается с 0
                         if (intFrom != last) {
                             result.add("grid.axes." + axis.name() + ".segments[" + i + "].from",
                                     "segments must adjoin each other without gaps and overlaps");
                         }
                         last = intTo;
 
-                        if (step > 10 || step < 0.1) {
+                        // Проверка, что шаг не слишком велик или мал
+                        if (step > 10 || step < 0.01) {
                             result.add("grid.axes." + axis.name() + ".segments[" + i + "].step",
                                     "step must be between 0.1 and 10");
                         }

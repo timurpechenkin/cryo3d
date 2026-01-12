@@ -3,6 +3,7 @@ package io.github.timurpechenkin.casefile;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import io.github.timurpechenkin.casefile.dto.SimulationCase;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.dataformat.yaml.YAMLFactory;
 
