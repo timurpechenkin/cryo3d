@@ -73,13 +73,11 @@ public class VirtualGrid {
                 int right = left + step;
 
                 steps[idx] = step;
-                centers[idx] = left + step / 2; // центр в scaled
+                centers[idx] = 2 * left + step;
                 edges[idx + 1] = right;
                 idx++;
             }
 
-            // Жёстко фиксируем границу на "to"
-            edges[idx] = to;
             expectedFrom = to;
         }
 
@@ -158,13 +156,13 @@ public class VirtualGrid {
         return z().centerMeters(k);
     }
 
-    // Объём
+    // Объём ячейки по индексам
 
     public double cellVolumeMeters3(int i, int j, int k) {
         return x().stepMeters(i) * y().stepMeters(j) * z().stepMeters(k);
     }
 
-    // Поиск индекса ячейки
+    // Поиск индекса ячейки по координате
 
     public int findCellX(double xMeters) {
         return findCellScaled(x().edgesScaled(), toScaled(xMeters));
@@ -182,29 +180,26 @@ public class VirtualGrid {
 
     // Центр i-ой ячейки
 
-    public int centerXScaled(int i) {
-        return x().centersScaled()[i];
+    public int centerXScaled2(int i) {
+        return x().centersScaled2()[i];
     }
 
-    public int centerYScaled(int j) {
-        return y().centersScaled()[j];
+    public int centerYScaled2(int j) {
+        return y().centersScaled2()[j];
     }
 
-    public int centerZScaled(int k) {
-        return z().centersScaled()[k];
+    public int centerZScaled2(int k) {
+        return z().centersScaled2()[k];
     }
 
-    // Объём
+    // Объём ячейки по индексам
 
-    public int cellVolumeScaled3(int i, int j, int k) {
+    public long cellVolumeScaled3(int i, int j, int k) {
         long v = (long) x().stepsScaled()[i] * y().stepsScaled()[j] * z().stepsScaled()[k];
-        if (v > Integer.MAX_VALUE) {
-            throw new ArithmeticException("Scaled volume overflow; use meters^3 or long");
-        }
-        return (int) v;
+        return v;
     }
 
-    // Поиск индекса ячейки
+    // Поиск индекса ячейки по координате*SCALE
 
     public int findCellXScaled(int x) {
         return findCellScaled(x().edgesScaled(), x);
