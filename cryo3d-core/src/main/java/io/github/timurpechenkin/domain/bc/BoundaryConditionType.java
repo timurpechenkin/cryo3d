@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.casefile.dto.bc;
+package io.github.timurpechenkin.domain.bc;
 
 public enum BoundaryConditionType {
     FIRST_KIND,

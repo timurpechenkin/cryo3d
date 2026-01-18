@@ -8,7 +8,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record Profile(
-                @NotBlank @JsonProperty("name") String name,
-                @Size(min = 2) @Valid @JsonProperty("points") List<Point> points) {
+public record ProfileDto(
+        @NotBlank @JsonProperty("name") String name,
+        @Size(min = 2) @Valid @JsonProperty("points") List<PointDto> points) {
 }

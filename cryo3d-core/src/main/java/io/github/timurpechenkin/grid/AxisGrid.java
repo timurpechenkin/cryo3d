@@ -1,6 +1,6 @@
 package io.github.timurpechenkin.grid;
 
-import static io.github.timurpechenkin.Constants.SCALE;
+import static io.github.timurpechenkin.geometry.GeometryScale.*;
 
 /**
  * Ось сетки в fixed-point представлении:
@@ -62,21 +62,21 @@ public record AxisGrid(
 
     /* Коордната края ячейки по индексу (не SCALED) */
     public double edgeMeters(int edgeIndex) {
-        return edgesScaled[edgeIndex] / (double) SCALE;
+        return toMeters(edgesScaled[edgeIndex]);
     }
 
     /* Коордната центра ячейки по индексу (не SCALED) */
     public double centerMeters(int cellIndex) {
-        return centersScaled2[cellIndex] / (double) (SCALE * 2);
+        return toMeters2(centersScaled2[cellIndex]);
     }
 
     /* Длинна стороны ячейки по индексу (не SCALED) */
     public double stepMeters(int cellIndex) {
-        return stepsScaled[cellIndex] / (double) SCALE;
+        return toMeters(stepsScaled[cellIndex]);
     }
 
     /* Длинна оси (не SCALED) */
     public double sizeMeters() {
-        return sizeScaled() / (double) SCALE;
+        return toMeters(sizeScaled());
     }
 }

@@ -17,11 +17,11 @@ grid:
               step: 0.5
         Z:
             - from: 0.0
+              to: 2.0
+              step: 0.1
+            - from: 2.0
               to: 40.0
               step: 0.5
-            - from: 40.0
-              to: 50.0
-              step: 1.0
 
 boundaryConditions:
     # тип граничного условия (FIRST_KIND, SECOND_KIND, THIRD_KIND)

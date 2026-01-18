@@ -3,8 +3,8 @@ package io.github.timurpechenkin.commands;
 import java.nio.file.Path;
 
 import io.github.timurpechenkin.casefile.CaseLoader;
-import io.github.timurpechenkin.casefile.dto.SimulationCase;
-import io.github.timurpechenkin.casefile.validation.CaseValidator;
+import io.github.timurpechenkin.casefile.CaseValidator;
+import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.validation.ValidationError;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.output.OutputWriter;
@@ -24,7 +24,7 @@ public class RunCommand implements Runnable {
     public void run() {
         try {
             CaseLoader loader = new CaseLoader();
-            SimulationCase simulationCase = loader.load(casePath);
+            SimulationCaseDto simulationCase = loader.load(casePath);
 
             CaseValidator validator = new CaseValidator();
             ValidationResult result = validator.validate(simulationCase);

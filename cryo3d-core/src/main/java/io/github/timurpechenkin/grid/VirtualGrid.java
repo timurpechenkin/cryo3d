@@ -1,126 +1,29 @@
 package io.github.timurpechenkin.grid;
 
 import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
 
-import static io.github.timurpechenkin.Constants.SCALE;
-
-import io.github.timurpechenkin.casefile.dto.grid.GridSettings;
-import io.github.timurpechenkin.casefile.dto.grid.Segment;
+import static io.github.timurpechenkin.geometry.GeometryScale.*;
+import io.github.timurpechenkin.domain.grid.Grid;
 import io.github.timurpechenkin.geometry.Axis;
 
-public class VirtualGrid {
+public class VirtualGrid implements Grid {
     private final EnumMap<Axis, AxisGrid> axesGrids;
 
     public VirtualGrid(EnumMap<Axis, AxisGrid> axesGrids) {
         this.axesGrids = axesGrids;
     }
 
-    public static VirtualGrid from(GridSettings grid) {
-        Map<Axis, List<Segment>> axesSegments = grid.axesSegments();
-
-        EnumMap<Axis, AxisGrid> axesGrids = new EnumMap<>(Axis.class);
-        for (Axis axis : Axis.values()) {
-            List<Segment> segments = axesSegments.get(axis);
-            axesGrids.put(axis, buildAxisGrid(axis, segments));
-        }
-        return new VirtualGrid(axesGrids);
-    }
-
-    private static AxisGrid buildAxisGrid(Axis axis, List<Segment> segments) {
-        if (segments == null || segments.isEmpty()) {
-            throw new IllegalArgumentException("No segments for axis " + axis);
-        }
-
-        // 1) Считаем количество ячеек строго в scaled-int
-        int cells = 0;
-        for (Segment s : segments) {
-            cells += segmentCellsScaled(s, axis);
-        }
-
-        int[] edges = new int[cells + 1];
-        int[] steps = new int[cells];
-        int[] centers = new int[cells];
-
-        // 2) Заполняем строго в int, без накопления double
-        int idx = 0;
-
-        // Стартовая граница
-        edges[0] = toScaled(segments.get(0).from());
-
-        // Защита стыковки сегментов (на всякий случай)
-        int expectedFrom = edges[0];
-
-        for (int si = 0; si < segments.size(); si++) {
-            Segment s = segments.get(si);
-
-            int from = toScaled(s.from());
-            int to = toScaled(s.to());
-            int step = toScaled(s.step());
-
-            if (from != expectedFrom) {
-                throw new IllegalArgumentException(
-                        "Segments are not contiguous for axis " + axis +
-                                ": expected from=" + fromMeters(expectedFrom) +
-                                " but got from=" + fromMeters(from));
-            }
-
-            int n = (to - from) / step;
-
-            for (int i = 0; i < n; i++) {
-                int left = edges[idx];
-                int right = left + step;
-
-                steps[idx] = step;
-                centers[idx] = 2 * left + step;
-                edges[idx + 1] = right;
-                idx++;
-            }
-
-            expectedFrom = to;
-        }
-
-        if (idx != cells) {
-            throw new IllegalStateException("Filled " + idx + " cells but expected " + cells);
-        }
-
-        return new AxisGrid(edges, centers, steps);
-    }
-
-    private static int segmentCellsScaled(Segment s, Axis axis) {
-        int from = toScaled(s.from());
-        int to = toScaled(s.to());
-        int step = toScaled(s.step());
-
-        if (step <= 0) {
-            throw new IllegalArgumentException("Non-positive step for axis " + axis + ": " + s.step());
-        }
-        int len = to - from;
-        if (len <= 0) {
-            throw new IllegalArgumentException(
-                    "Non-positive segment length for axis " + axis + ": from=" + s.from() + " to=" + s.to());
-        }
-        if (len % step != 0) {
-            throw new IllegalArgumentException(
-                    "Segment is not divisible by step for axis " + axis +
-                            ": (to-from)=" + fromMeters(len) + " step=" + fromMeters(step) +
-                            " (scaled len=" + len + ", step=" + step + ")");
-        }
-        return len / step;
-    }
-
     // ----- Доступ к осям -----
 
-    public AxisGrid x() {
+    private AxisGrid x() {
         return axesGrids.get(Axis.X);
     }
 
-    public AxisGrid y() {
+    private AxisGrid y() {
         return axesGrids.get(Axis.Y);
     }
 
-    public AxisGrid z() {
+    private AxisGrid z() {
         return axesGrids.get(Axis.Z);
     }
 
@@ -174,6 +77,20 @@ public class VirtualGrid {
 
     public int findCellZ(double zMeters) {
         return findCellScaled(z().edgesScaled(), toScaled(zMeters));
+    }
+
+    // Длинна осей
+
+    public double sizeMetersX() {
+        return toMeters(edgesScaledX()[nx()] - edgesScaledX()[0]);
+    }
+
+    public double sizeMetersY() {
+        return toMeters(edgesScaledY()[ny()] - edgesScaledY()[0]);
+    }
+
+    public double sizeMetersZ() {
+        return toMeters(edgesScaledZ()[nz()] - edgesScaledZ()[0]);
     }
 
     // ----- ВНУТРЕННИЙ API (scaled int) -----
@@ -235,13 +152,79 @@ public class VirtualGrid {
         return -1;
     }
 
-    // ----- КОНВЕРТАЦИЯ -----
+    // Масивы координат*SCALE ячеек по осям
 
-    private static int toScaled(double meters) {
-        return (int) Math.round(meters * SCALE);
+    // Для Х
+
+    /**
+     * Координаты ребер ячеек (edges.length = cells + 1).
+     * edges[i] - левый край i-й ячейки, edges[i+1] - правый. Умножены на SCALE.
+     */
+    public int[] edgesScaledX() {
+        return x().edgesScaled();
     }
 
-    private static double fromMeters(int scaled) {
-        return scaled / (double) SCALE;
+    /** Центры ячеек (centers.length = cells). Умножены на SCALE*2. */
+    public int[] centersScaled2X() {
+        return x().centersScaled2();
+    }
+
+    /** Длины ячеек (steps.length = cells). Умножены на SCALE. */
+    public int[] stepsScaledX() {
+        return x().stepsScaled();
+    }
+
+    // Для Y
+
+    /**
+     * Координаты ребер ячеек (edges.length = cells + 1).
+     * edges[i] - левый край i-й ячейки, edges[i+1] - правый. Умножены на SCALE.
+     */
+    public int[] edgesScaledY() {
+        return y().edgesScaled();
+    }
+
+    /** Центры ячеек (centers.length = cells). Умножены на SCALE*2. */
+    public int[] centersScaled2Y() {
+        return y().centersScaled2();
+    }
+
+    /** Длины ячеек (steps.length = cells). Умножены на SCALE. */
+    public int[] stepsScaledY() {
+        return y().stepsScaled();
+    }
+
+    // Для Z
+
+    /**
+     * Координаты ребер ячеек (edges.length = cells + 1).
+     * edges[i] - левый край i-й ячейки, edges[i+1] - правый. Умножены на SCALE.
+     */
+    public int[] edgesScaledZ() {
+        return z().edgesScaled();
+    }
+
+    /** Центры ячеек (centers.length = cells). Умножены на SCALE*2. */
+    public int[] centersScaled2Z() {
+        return z().centersScaled2();
+    }
+
+    /** Длины ячеек (steps.length = cells). Умножены на SCALE. */
+    public int[] stepsScaledZ() {
+        return z().stepsScaled();
+    }
+
+    // Длинна осей
+
+    public int sizeScaledX() {
+        return edgesScaledX()[nx()] - edgesScaledX()[0];
+    }
+
+    public int sizeScaledY() {
+        return edgesScaledY()[ny()] - edgesScaledY()[0];
+    }
+
+    public int sizeScaledZ() {
+        return edgesScaledZ()[nz()] - edgesScaledZ()[0];
     }
 }

@@ -1,13 +1,13 @@
-package io.github.timurpechenkin.casefile.validation;
+package io.github.timurpechenkin.casefile;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static io.github.timurpechenkin.geometry.GeometryScale.*;
 import static io.github.timurpechenkin.Constants.*;
 
-import io.github.timurpechenkin.casefile.dto.SimulationCase;
-import io.github.timurpechenkin.casefile.dto.bc.Face;
+import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.dto.common.Field;
 import io.github.timurpechenkin.casefile.dto.common.Rule;
 import io.github.timurpechenkin.casefile.dto.grid.Segment;
@@ -16,7 +16,9 @@ import io.github.timurpechenkin.casefile.dto.selector.Selector;
 import io.github.timurpechenkin.casefile.dto.selector.ZRangeSelector;
 import io.github.timurpechenkin.casefile.dto.temperature.ConstantTemperature;
 import io.github.timurpechenkin.casefile.dto.temperature.TemperatureValue;
+import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.geometry.Axis;
+import io.github.timurpechenkin.geometry.Face;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -27,7 +29,7 @@ public final class CaseValidator {
     public CaseValidator() {
     }
 
-    public ValidationResult validate(SimulationCase simulationCase) {
+    public ValidationResult validate(SimulationCaseDto simulationCase) {
         ValidationResult result = new ValidationResult();
 
         if (simulationCase == null) {
@@ -36,8 +38,8 @@ public final class CaseValidator {
         }
 
         // Bean Validation (аннотации)
-        Set<ConstraintViolation<SimulationCase>> violations = VALIDATOR.validate(simulationCase);
-        for (ConstraintViolation<SimulationCase> v : violations) {
+        Set<ConstraintViolation<SimulationCaseDto>> violations = VALIDATOR.validate(simulationCase);
+        for (ConstraintViolation<SimulationCaseDto> v : violations) {
             result.add(v.getPropertyPath().toString(), v.getMessage());
         }
 
@@ -60,9 +62,9 @@ public final class CaseValidator {
                         double to = s.to();
                         double step = s.step();
 
-                        int intFrom = (int) Math.round(from * SCALE);
-                        int intTo = (int) Math.round(to * SCALE);
-                        int intStep = (int) Math.round(step * SCALE);
+                        int intFrom = toScaled(from);
+                        int intTo = toScaled(to);
+                        int intStep = toScaled(step);
 
                         // Проверка кратности длинны сегмента и шага
                         if ((intTo - intFrom) % intStep != 0) {

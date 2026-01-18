@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.casefile.dto.bc;
+package io.github.timurpechenkin.geometry;
 
 public enum Face {
     X_MIN, X_MAX,

@@ -3,7 +3,7 @@ package io.github.timurpechenkin.casefile;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import io.github.timurpechenkin.casefile.dto.SimulationCase;
+import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.dataformat.yaml.YAMLFactory;
 
@@ -14,7 +14,7 @@ public final class CaseLoader {
         this.mapper = new ObjectMapper(new YAMLFactory());
     }
 
-    public SimulationCase load(Path path) throws IOException {
-        return mapper.readValue(path.toFile(), SimulationCase.class);
+    public SimulationCaseDto load(Path path) throws IOException {
+        return mapper.readValue(path.toFile(), SimulationCaseDto.class);
     }
 }

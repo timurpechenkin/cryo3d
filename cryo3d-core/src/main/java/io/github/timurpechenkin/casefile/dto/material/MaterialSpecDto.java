@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.github.timurpechenkin.casefile.dto.common.Field;
 
-public record Materials(
-                @JsonProperty("definitions") Map<String, MaterialDefinition> definitions,
-                @JsonProperty("field") Field<String> field) {
+public record MaterialSpecDto(
+        @JsonProperty("definitions") Map<String, MaterialDefinition> definitions,
+        @JsonProperty("field") Field<String> field) {
 }

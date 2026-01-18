@@ -2,13 +2,15 @@ package io.github.timurpechenkin.casefile.dto.bc;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.github.timurpechenkin.domain.bc.BoundaryConditionType;
+
 /**
  * Поля temperature / heatFlow / heatTransferCoefficient
  * будут валидироваться в зависимости от type на следующем шаге.
  */
 public record BoundaryConditionDefinition(
-        @JsonProperty("type") BoundaryConditionType type,
-        @JsonProperty("temperature") Double temperature,
-        @JsonProperty("heatFlow") Double heatFlow,
-        @JsonProperty("heatTransferCoefficient") Double heatTransferCoefficient) {
+                @JsonProperty("type") BoundaryConditionType type,
+                @JsonProperty("temperature") Double temperature,
+                @JsonProperty("heatFlow") Double heatFlow,
+                @JsonProperty("heatTransferCoefficient") Double heatTransferCoefficient) {
 }

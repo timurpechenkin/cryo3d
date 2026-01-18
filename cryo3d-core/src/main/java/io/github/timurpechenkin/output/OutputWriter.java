@@ -5,12 +5,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
-import io.github.timurpechenkin.casefile.dto.SimulationCase;
-import io.github.timurpechenkin.grid.VirtualGrid;
+import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
+import io.github.timurpechenkin.casefile.resolve.GridResolver;
 import io.github.timurpechenkin.output.Summary.GridInfo;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
+
+import io.github.timurpechenkin.domain.grid.Grid;
 
 public class OutputWriter {
     private final ObjectMapper jsonMapper;
@@ -24,14 +26,14 @@ public class OutputWriter {
                 .build();
     }
 
-    public void writeSummary(Path outDir, SimulationCase c, String status) throws IOException {
+    public void writeSummary(Path outDir, SimulationCaseDto c, String status) throws IOException {
         Files.createDirectories(outDir);
 
-        VirtualGrid grid = VirtualGrid.from(c.grid());
+        Grid grid = GridResolver.virtualGridFrom(c.grid());
 
         GridInfo gridInfo = new GridInfo(grid.cellCount(),
-                grid.x().sizeMeters(),
-                grid.y().sizeMeters(), grid.z().sizeMeters());
+                grid.sizeMetersX(),
+                grid.sizeMetersY(), grid.sizeMetersZ());
         Summary summary = new Summary(
                 c.caseName(),
                 Instant.now(),

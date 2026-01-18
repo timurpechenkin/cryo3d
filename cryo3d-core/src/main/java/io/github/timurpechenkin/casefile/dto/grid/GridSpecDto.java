@@ -8,6 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.timurpechenkin.geometry.Axis;
 import jakarta.validation.Valid;
 
-public record GridSettings(
-        @Valid @JsonProperty("axes") Map<Axis, List<Segment>> axesSegments) {
+public record GridSpecDto(
+                @Valid @JsonProperty("axes") Map<Axis, List<Segment>> axesSegments) {
 }
