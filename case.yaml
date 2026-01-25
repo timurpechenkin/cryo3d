@@ -89,19 +89,22 @@ materials:
               value: material2
 
 temperature:
-    field:
-        default:
+    definitions:
+        temp1:
             type: CONSTANT
             temperature: -2.0
+        temp2:
+            type: CONSTANT
+            temperature: 2.0
+    field:
+        default: temp1
         rules:
             - name: "warm-top"
               selector:
                   type: Z_RANGE
                   zMin: 0.0
                   zMax: 1.0
-              value:
-                  type: CONSTANT
-                  temperature: 2.0
+              value: temp2
 
 profiles:
     - name: "centerline"

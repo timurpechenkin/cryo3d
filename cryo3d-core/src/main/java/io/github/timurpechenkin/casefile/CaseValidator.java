@@ -1,5 +1,6 @@
 package io.github.timurpechenkin.casefile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,8 +15,7 @@ import io.github.timurpechenkin.casefile.dto.grid.Segment;
 import io.github.timurpechenkin.casefile.dto.selector.BoxSelector;
 import io.github.timurpechenkin.casefile.dto.selector.Selector;
 import io.github.timurpechenkin.casefile.dto.selector.ZRangeSelector;
-import io.github.timurpechenkin.casefile.dto.temperature.ConstantTemperature;
-import io.github.timurpechenkin.casefile.dto.temperature.TemperatureValue;
+import io.github.timurpechenkin.casefile.dto.temperature.TemperatureDefinition;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.geometry.Axis;
 import io.github.timurpechenkin.geometry.Face;
@@ -128,7 +128,39 @@ public final class CaseValidator {
             }
         }
 
-        // 4) Проверка boundaryConditions
+        // 4) Проверка температур
+        if (simulationCase.temperature() != null) {
+            Map<String, TemperatureDefinition> defs = simulationCase.temperature().definitions();
+            Field<String> field = simulationCase.temperature().field();
+
+            if (defs == null || defs.isEmpty()) {
+                result.add("temperature.definitions", "definitions must not be empty");
+            } else {
+                List<TemperatureDefinition> temperatures = new ArrayList<>(defs.values());
+                for (int i = 0; i < temperatures.size(); i++) {
+                    checkTemperatureValue(result, "temperature.definitions[" + i + "]", temperatures.get(i));
+                }
+
+                if (field != null) {
+                    checkRef(result, "temperature.field.default", field.defaultValue(), defs);
+
+                    List<Rule<String>> rules = field.rules();
+                    if (rules != null) {
+                        for (int i = 0; i < rules.size(); i++) {
+                            Rule<String> rule = rules.get(i);
+                            if (rule != null) {
+                                checkRef(result, "temperature.field.rules[" + i + "].value", rule.value(), defs);
+                                checkSelector(result, "temperature.field.rules[" + i + "].seletor", rule.selector());
+                            }
+                        }
+                    }
+                } else {
+                    result.add("temperature.field", "field must not be empty");
+                }
+            }
+        }
+
+        // 5) Проверка boundaryConditions
         if (simulationCase.boundaryConditions() == null) {
             result.add("boundaryConditions", "boundaryConditions must not be empty");
         } else if (simulationCase.boundaryConditions().field() == null) {
@@ -171,28 +203,6 @@ public final class CaseValidator {
             }
         }
 
-        // 5) Проверка температур
-        if (simulationCase.temperature() == null) {
-            result.add("temperature", "temperature must not be empty");
-        } else {
-            Field<TemperatureValue> field = simulationCase.temperature().field();
-            if (field == null) {
-                result.add("temperature.field", "temperature field must not be empty");
-            } else {
-                checkTemperatureValue(result, "temperature.field.default.temperature", field.defaultValue());
-                List<Rule<TemperatureValue>> rules = field.rules();
-                if (rules != null) {
-                    for (int i = 0; i < rules.size(); i++) {
-                        Rule<TemperatureValue> rule = rules.get(i);
-                        if (rule != null) {
-                            checkSelector(result, "temperature.field.rule[" + i + "].seletor", rule.selector());
-                            checkTemperatureValue(result, "temperature.field.rule[" + i + "].value", rule.value());
-                        }
-                    }
-                }
-            }
-        }
-
         return result;
     }
 
@@ -206,17 +216,24 @@ public final class CaseValidator {
 
     // Проверка значения температуры
     // ConstantTemperature
-    private static void checkTemperatureValue(ValidationResult result, String path, TemperatureValue value) {
-        if (value != null && value.getClass() == ConstantTemperature.class) {
-            ConstantTemperature constTemperature = (ConstantTemperature) value;
-            double temperature = constTemperature.temperature();
-            if (temperature < MIN_TEMPERATURE || temperature > MAX_TEMPERATURE) {
+    private static void checkTemperatureValue(ValidationResult result, String path, TemperatureDefinition value) {
+        if (value == null) {
+            result.add(path, "temperature value must not be blank");
+        }
+
+        switch (value.type()) {
+            case CONSTANT:
+                double temperature = value.temperature();
+                if (temperature < MIN_TEMPERATURE || temperature > MAX_TEMPERATURE) {
+                    result.add(path,
+                            "temperature must be between " + MIN_TEMPERATURE + " C and " + MAX_TEMPERATURE + " C.");
+                }
+                break;
+
+            default:
                 result.add(path,
-                        "temperature must be between " + MIN_TEMPERATURE + " C and " + MAX_TEMPERATURE + " C.");
-            }
-        } else {
-            result.add(path,
-                    "unknown temperature type");
+                        "unknown temperature type");
+                break;
         }
     }
 
@@ -237,8 +254,8 @@ public final class CaseValidator {
     }
 
     private static void checkZ_RANGE(ValidationResult result, String path, ZRangeSelector selector) {
-        double zMin = selector.zMin();
-        double zMax = selector.zMax();
+        double zMin = selector.minZMeters();
+        double zMax = selector.maxZMeters();
 
         if (zMax < zMin) {
             result.add(path, "zMax must be bigger then zMin");
