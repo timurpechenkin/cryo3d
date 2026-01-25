@@ -3,10 +3,12 @@ package io.github.timurpechenkin.commands;
 import java.nio.file.Path;
 
 import io.github.timurpechenkin.casefile.CaseLoader;
+import io.github.timurpechenkin.casefile.CaseResolver;
 import io.github.timurpechenkin.casefile.CaseValidator;
 import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.validation.ValidationError;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
+import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.output.OutputWriter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -24,10 +26,10 @@ public class RunCommand implements Runnable {
     public void run() {
         try {
             CaseLoader loader = new CaseLoader();
-            SimulationCaseDto simulationCase = loader.load(casePath);
+            SimulationCaseDto caseDto = loader.load(casePath);
 
             CaseValidator validator = new CaseValidator();
-            ValidationResult result = validator.validate(simulationCase);
+            ValidationResult result = validator.validate(caseDto);
             if (!result.isOk()) {
                 System.out.println("ERROR: case is invalid:");
                 for (ValidationError error : result.errors()) {
@@ -36,6 +38,9 @@ public class RunCommand implements Runnable {
                 System.exit(2);
                 return;
             }
+
+            CaseResolver resolver = new CaseResolver();
+            SimulationCase simulationCase = resolver.resolve(caseDto);
 
             OutputWriter writer = new OutputWriter();
             writer.writeSummary(outDir, simulationCase, "NOT_IMPLEMENTED_YET");
