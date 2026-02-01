@@ -13,6 +13,7 @@ import io.github.timurpechenkin.casefile.dto.grid.GridSpecDto;
 import io.github.timurpechenkin.casefile.dto.material.MaterialDefinition;
 import io.github.timurpechenkin.casefile.dto.temperature.TemperatureDefinition;
 import io.github.timurpechenkin.casefile.dto.time.TimeSettingsDto;
+import io.github.timurpechenkin.casefile.resolve.BoundaryConditionDiscretizer;
 import io.github.timurpechenkin.casefile.resolve.GridResolver;
 import io.github.timurpechenkin.casefile.resolve.MaterialDiscretizer;
 import io.github.timurpechenkin.casefile.resolve.TemperatureDiscretizer;
@@ -34,6 +35,7 @@ import io.github.timurpechenkin.geometry.Profile;
 public final class CaseResolver {
     private final MaterialDiscretizer materialDiscretizer = new MaterialDiscretizer();
     private final TemperatureDiscretizer temperatureDiscretizer = new TemperatureDiscretizer();
+    private final BoundaryConditionDiscretizer bcDiscretizer = new BoundaryConditionDiscretizer();
 
     public SimulationCase resolve(SimulationCaseDto dto) {
         // 1) time
@@ -51,7 +53,8 @@ public final class CaseResolver {
         List<Profile> profiles = resolveProfiles(dto.profiles());
 
         // 5) fields
-        BoundaryConditionField bcField = BoundaryConditionField.empty();
+        BoundaryConditionField bcField = bcDiscretizer.discretize(grid, dto.boundaryConditions().field().faces(),
+                bcLibrary);
         MaterialField materialField = materialDiscretizer.discretize(grid, dto.materials().field(),
                 materialLibrary);
         TemperatureField temperatureField = temperatureDiscretizer.discretize(grid, dto.temperature().field(),

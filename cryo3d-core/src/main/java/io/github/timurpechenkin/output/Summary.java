@@ -1,9 +1,11 @@
 package io.github.timurpechenkin.output;
 
 import java.time.Instant;
+import java.util.EnumMap;
 import java.util.Map;
 
 import io.github.timurpechenkin.domain.time.TimeSettings;
+import io.github.timurpechenkin.geometry.Face;
 
 public record Summary(
                 String caseName,
@@ -12,7 +14,8 @@ public record Summary(
                 TimeSettings time,
                 GridStats virtualGrid,
                 MaterialStats materialStats,
-                TemperatureStats temperatureStats) {
+                TemperatureStats temperatureStats,
+                BoundaryConditionStatus bcStatus) {
 
         public record GridStats(
                         long cellCount,
@@ -34,7 +37,11 @@ public record Summary(
                         Map<Double, Long> countsByValueRounded2) {
         }
 
-        public record ItemCount(String name, long count) {
+        public record BoundaryConditionStatus(EnumMap<Face, FaceBC> faceBC) {
+        }
+
+        public record FaceBC(long totalCells,
+                        Map<String, Long> countsByName) {
         }
 
 }

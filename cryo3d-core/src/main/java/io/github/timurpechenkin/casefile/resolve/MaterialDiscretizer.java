@@ -9,7 +9,7 @@ import io.github.timurpechenkin.domain.model.Library;
 public class MaterialDiscretizer extends AbstractDiscretizer3D<Material> {
 
     public MaterialField discretize(Grid grid, Field<String> field, Library<Material> lib) {
-        return new MaterialField(discretizeToIndex(grid, field, lib));
+        return new MaterialField(discretizeToIndex(grid, field, lib), grid);
     }
 
 }

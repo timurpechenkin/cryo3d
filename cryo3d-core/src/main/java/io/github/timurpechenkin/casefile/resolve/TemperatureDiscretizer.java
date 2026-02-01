@@ -23,7 +23,7 @@ public class TemperatureDiscretizer extends AbstractDiscretizer3D<Temperature> {
             }
         }
 
-        return new TemperatureField(temperatureArr);
+        return new TemperatureField(temperatureArr, grid);
     }
 
 }

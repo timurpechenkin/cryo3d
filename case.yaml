@@ -78,6 +78,13 @@ materials:
             heatCapacityFrozen: 2500
             phaseTransitionsHeat: 300000
             freezingTemperature: -1
+        material3:
+            thermalConductivityThawed: 1.500
+            thermalConductivityFrozen: 3.500
+            heatCapacityThawed: 4000
+            heatCapacityFrozen: 2000
+            phaseTransitionsHeat: 100000
+            freezingTemperature: -0.5
     field:
         default: material1
         rules:
@@ -87,6 +94,12 @@ materials:
                   min: [6.666, 0.0, 0.0]
                   max: [20.0, 20.0, 10.0]
               value: material2
+            - name: "mid"
+              selector:
+                  type: Z_RANGE
+                  zMin: 20.0
+                  zMax: 25.0
+              value: material3
 
 temperature:
     definitions:

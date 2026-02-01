@@ -5,11 +5,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.bc.BoundaryCondition;
+import io.github.timurpechenkin.domain.bc.BoundaryConditionField;
+import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
 import io.github.timurpechenkin.domain.grid.Grid;
 import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
+import io.github.timurpechenkin.geometry.Face;
+import io.github.timurpechenkin.output.Summary.BoundaryConditionStatus;
+import io.github.timurpechenkin.output.Summary.FaceBC;
 import io.github.timurpechenkin.output.Summary.GridStats;
 import io.github.timurpechenkin.output.Summary.MaterialStats;
 import io.github.timurpechenkin.output.Summary.TemperatureStats;
@@ -23,6 +29,7 @@ public final class SummaryCalculator {
         GridStats gridStats = gridStats(c.grid());
         MaterialStats materialStats = materialStats(c.materialField(), c.materialLibrary());
         TemperatureStats temperatureStats = temperatureStats(c.temperatureField());
+        BoundaryConditionStatus bcStatus = bcStatus(c.bcField(), c.bcLibrary());
 
         Summary summary = new Summary(
                 c.caseName(),
@@ -30,7 +37,8 @@ public final class SummaryCalculator {
                 status,
                 c.time(),
                 gridStats, materialStats,
-                temperatureStats);
+                temperatureStats,
+                bcStatus);
 
         return summary;
     }
@@ -104,5 +112,31 @@ public final class SummaryCalculator {
                         LinkedHashMap::new));
 
         return new TemperatureStats(total, min, max, avg, countsRounded);
+    }
+
+    private static BoundaryConditionStatus bcStatus(BoundaryConditionField field, BoundaryConditionLibrary library) {
+        EnumMap<Face, FaceBC> bcByFace = new EnumMap<>(Face.class);
+        for (Face face : Face.values()) {
+            int[] bcArr = field.raw(face);
+            long total = bcArr.length;
+            long[] counts = new long[library.size()];
+            for (int idx : bcArr) {
+                if (idx < 0 || idx >= counts.length) {
+                    throw new IllegalStateException("Material index out of range: " + idx);
+                }
+                counts[idx]++;
+            }
+
+            // counts by name
+            Map<String, Long> byName = new LinkedHashMap<>();
+            for (int i = 0; i < counts.length; i++) {
+                long c = counts[i];
+                BoundaryCondition m = library.getByIndex(i);
+                byName.put(m.name(), c);
+            }
+
+            bcByFace.put(face, new FaceBC(total, byName));
+        }
+        return new BoundaryConditionStatus(bcByFace);
     }
 }
