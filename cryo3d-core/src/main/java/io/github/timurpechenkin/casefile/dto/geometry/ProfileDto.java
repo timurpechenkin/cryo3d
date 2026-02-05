@@ -1,14 +1,12 @@
 package io.github.timurpechenkin.casefile.dto.geometry;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 public record ProfileDto(
-        @NotBlank @JsonProperty("name") String name,
-        @Size(min = 2) @Valid @JsonProperty("points") List<PointDto> points) {
+                @NotBlank @JsonProperty("name") String name,
+                @Valid @JsonProperty("pointA") PointDto pointA,
+                @Valid @JsonProperty("pointB") PointDto pointB) {
 }

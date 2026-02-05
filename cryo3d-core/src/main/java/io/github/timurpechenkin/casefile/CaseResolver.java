@@ -25,12 +25,13 @@ import io.github.timurpechenkin.domain.grid.Grid;
 import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
+import io.github.timurpechenkin.domain.measurement.Profile;
+import io.github.timurpechenkin.domain.measurement.SamplePoint;
 import io.github.timurpechenkin.domain.temperature.Temperature;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 import io.github.timurpechenkin.domain.temperature.TemperatureLibrary;
 import io.github.timurpechenkin.domain.time.TimeSettings;
 import io.github.timurpechenkin.geometry.Point3D;
-import io.github.timurpechenkin.geometry.Profile;
 
 public final class CaseResolver {
     private final MaterialDiscretizer materialDiscretizer = new MaterialDiscretizer();
@@ -52,7 +53,10 @@ public final class CaseResolver {
         // 4) profiles
         List<Profile> profiles = resolveProfiles(dto.profiles());
 
-        // 5) fields
+        // 5) sample points
+        List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints());
+
+        // 6) fields
         BoundaryConditionField bcField = bcDiscretizer.discretize(grid, dto.boundaryConditions().field().faces(),
                 bcLibrary);
         MaterialField materialField = materialDiscretizer.discretize(grid, dto.materials().field(),
@@ -70,7 +74,8 @@ public final class CaseResolver {
                 materialField,
                 temperatureLibrary,
                 temperatureField,
-                profiles);
+                profiles,
+                samplePoints);
     }
 
     private TimeSettings resolveTime(TimeSettingsDto t) {
@@ -87,12 +92,12 @@ public final class CaseResolver {
             String id = entry.getKey();
             TemperatureDefinition m = entry.getValue();
 
-            Temperature material = new Temperature(
+            Temperature temp = new Temperature(
                     id,
                     m.type(),
                     m.temperature());
 
-            lib.add(id, material);
+            lib.add(id, temp);
         }
         return lib;
     }
@@ -135,15 +140,25 @@ public final class CaseResolver {
         return lib;
     }
 
-    private List<Profile> resolveProfiles(List<ProfileDto> dtos) {
-        List<Profile> profiles = new ArrayList<>(dtos.size());
-        for (var p : dtos) {
-            List<Point3D> pts = new ArrayList<>(p.points().size());
-            for (var pt : p.points()) {
-                pts.add(new Point3D(toScaled(pt.x()), toScaled(pt.y()), toScaled(pt.z())));
-            }
-            profiles.add(new Profile(p.name(), pts));
+    private List<SamplePoint> resolveSamplePoints(List<SamplePointDto> dtos) {
+        List<SamplePoint> samplePoints = new ArrayList<>();
+        for (SamplePointDto dto : dtos) {
+            samplePoints.add(new SamplePoint(dto.name(), toPoint3d(dto.point())));
+        }
+        return samplePoints;
+    }
+
+    private List<Profile> resolveProfiles(List<ProfileDto> profileDtoList) {
+        List<Profile> profiles = new ArrayList<>(profileDtoList.size());
+        for (ProfileDto profileDto : profileDtoList) {
+            Point3D pointA = toPoint3d(profileDto.pointA());
+            Point3D pointB = toPoint3d(profileDto.pointB());
+            profiles.add(new Profile(profileDto.name(), pointA, pointB));
         }
         return profiles;
+    }
+
+    private Point3D toPoint3d(PointDto dto) {
+        return new Point3D(toScaled(dto.x()), toScaled(dto.y()), toScaled(dto.z()));
     }
 }

@@ -121,6 +121,9 @@ temperature:
 
 profiles:
     - name: "centerline"
-      points:
-          - [10.0, 10.0, 0.0]
-          - [10.0, 10.0, 10.0]
+      pointA: [10.0, 10.0, 0.0]
+      pointB: [10.0, 10.0, 0.0]
+
+samplePoints:
+    - name: "center"
+      point: [10.0, 10.0, 10.0]
