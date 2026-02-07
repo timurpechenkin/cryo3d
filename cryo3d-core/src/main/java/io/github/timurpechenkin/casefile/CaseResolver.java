@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import io.github.timurpechenkin.casefile.dto.geometry.*;
 import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.dto.bc.BoundaryConditionDefinition;
 import io.github.timurpechenkin.casefile.dto.grid.GridSpecDto;
 import io.github.timurpechenkin.casefile.dto.material.MaterialDefinition;
+import io.github.timurpechenkin.casefile.dto.measurement.*;
 import io.github.timurpechenkin.casefile.dto.temperature.TemperatureDefinition;
 import io.github.timurpechenkin.casefile.dto.time.TimeSettingsDto;
 import io.github.timurpechenkin.casefile.resolve.BoundaryConditionDiscretizer;
@@ -27,6 +27,7 @@ import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.measurement.Profile;
 import io.github.timurpechenkin.domain.measurement.SamplePoint;
+import io.github.timurpechenkin.domain.model.AbstractField3D;
 import io.github.timurpechenkin.domain.temperature.Temperature;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 import io.github.timurpechenkin.domain.temperature.TemperatureLibrary;
@@ -50,19 +51,19 @@ public final class CaseResolver {
         MaterialLibrary materialLibrary = resolveMaterialLibrary(dto.materials().definitions());
         TemperatureLibrary temperatureLibrary = resolveTemperatureLibrary(dto.temperature().definitions());
 
-        // 4) profiles
-        List<Profile> profiles = resolveProfiles(dto.profiles());
-
-        // 5) sample points
-        List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints());
-
-        // 6) fields
+        // 4) fields
         BoundaryConditionField bcField = bcDiscretizer.discretize(grid, dto.boundaryConditions().field().faces(),
                 bcLibrary);
         MaterialField materialField = materialDiscretizer.discretize(grid, dto.materials().field(),
                 materialLibrary);
         TemperatureField temperatureField = temperatureDiscretizer.discretize(grid, dto.temperature().field(),
                 temperatureLibrary);
+
+        // 5) profiles
+        List<Profile> profiles = resolveProfiles(dto.profiles());
+
+        // 6) sample points
+        List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints(), materialField);
 
         return new SimulationCase(
                 dto.caseName(),
@@ -140,10 +141,14 @@ public final class CaseResolver {
         return lib;
     }
 
-    private List<SamplePoint> resolveSamplePoints(List<SamplePointDto> dtos) {
+    private List<SamplePoint> resolveSamplePoints(List<SamplePointDto> dtos, AbstractField3D field) {
         List<SamplePoint> samplePoints = new ArrayList<>();
         for (SamplePointDto dto : dtos) {
-            samplePoints.add(new SamplePoint(dto.name(), toPoint3d(dto.point())));
+            int x = toScaled(dto.point().x());
+            int y = toScaled(dto.point().x());
+            int z = toScaled(dto.point().x());
+            int cellIndex = field.index(x, y, z);
+            samplePoints.add(new SamplePoint(dto.name(), toPoint3d(dto.point()), cellIndex));
         }
         return samplePoints;
     }

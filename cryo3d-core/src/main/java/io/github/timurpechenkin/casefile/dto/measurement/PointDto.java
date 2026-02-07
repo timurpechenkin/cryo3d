@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.casefile.dto.geometry;
+package io.github.timurpechenkin.casefile.dto.measurement;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
