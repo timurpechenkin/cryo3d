@@ -28,7 +28,7 @@ import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.measurement.Profile;
 import io.github.timurpechenkin.domain.measurement.SamplePoint;
-import io.github.timurpechenkin.domain.model.AbstractField3D;
+import io.github.timurpechenkin.domain.model.Field3D;
 import io.github.timurpechenkin.domain.temperature.Temperature;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 import io.github.timurpechenkin.domain.temperature.TemperatureLibrary;
@@ -42,11 +42,13 @@ public final class CaseResolver {
     private final ProfileDiscretizer profileDiscretizer = new ProfileDiscretizer();
 
     public SimulationCase resolve(SimulationCaseDto dto) {
+
         // 1) time
         TimeSettings time = resolveTime(dto.time());
 
         // 2) grid
         Grid grid = resolveGrid(dto.grid());
+        Field3D field3d = new Field3D(grid);
 
         // 3) libraries
         BoundaryConditionLibrary bcLibrary = resolveBcLibrary(dto.boundaryConditions().definitions());
@@ -64,12 +66,12 @@ public final class CaseResolver {
         // 5) profiles
         List<Profile> profiles = new ArrayList<>();
         for (ProfileDto profileDto : dto.profiles()) {
-            Profile profile = profileDiscretizer.discretize(grid, profileDto, materialField);
+            Profile profile = profileDiscretizer.discretize(grid, profileDto, field3d);
             profiles.add(profile);
         }
 
         // 6) sample points
-        List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints(), grid, materialField);
+        List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints(), grid, field3d);
 
         return new SimulationCase(
                 dto.caseName(),
@@ -147,7 +149,7 @@ public final class CaseResolver {
         return lib;
     }
 
-    private List<SamplePoint> resolveSamplePoints(List<SamplePointDto> dtos, Grid grid, AbstractField3D field) {
+    private List<SamplePoint> resolveSamplePoints(List<SamplePointDto> dtos, Grid grid, Field3D field) {
         List<SamplePoint> samplePoints = new ArrayList<>();
         for (SamplePointDto dto : dtos) {
             int x = grid.findCellX(dto.point().x());

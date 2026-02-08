@@ -1,16 +1,14 @@
 package io.github.timurpechenkin.domain.temperature;
 
 import io.github.timurpechenkin.domain.grid.Grid;
-import io.github.timurpechenkin.domain.model.AbstractField3D;
+import io.github.timurpechenkin.domain.model.Field3D;
 
-public final class TemperatureField extends AbstractField3D {
+public final class TemperatureField {
     private final double[] temperatureCByCell;
+    private final Field3D field3d;
 
     public TemperatureField(double[] temperatureCByCell, Grid grid) {
-        super(grid);
-        this.temperatureCByCell = temperatureCByCell;
-
-        long expected = (long) nx() * ny() * nz();
+        long expected = (long) grid.nx() * grid.ny() * grid.nz();
         if (expected > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Grid too large for field: " + expected);
         }
@@ -19,6 +17,9 @@ public final class TemperatureField extends AbstractField3D {
                     "temperatureCByCell.length=" + temperatureCByCell.length +
                             " != nx*ny*nz=" + expected);
         }
+
+        this.temperatureCByCell = temperatureCByCell;
+        this.field3d = new Field3D(grid);
     }
 
     public double[] temperatureCByCell() {
@@ -26,6 +27,6 @@ public final class TemperatureField extends AbstractField3D {
     }
 
     public double temperatureC(int x, int y, int z) {
-        return temperatureCByCell()[index(x, y, z)];
+        return temperatureCByCell()[field3d.index(x, y, z)];
     }
 }

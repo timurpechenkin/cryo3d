@@ -60,17 +60,17 @@ public record AxisGrid(
 
     // ----- Внешний API в метрах -----
 
-    /* Коордната края ячейки по индексу (не SCALED) */
+    /* Коордната края ячейки по индексу */
     public double edgeMeters(int edgeIndex) {
         return scaledToMeters(edgesScaled[edgeIndex]);
     }
 
-    /* Коордната центра ячейки по индексу (не SCALED) */
+    /* Коордната центра ячейки по индексу */
     public double centerMeters(int cellIndex) {
         return scaled2ToMeters(centersScaled2[cellIndex]);
     }
 
-    /* Длинна стороны ячейки по индексу (не SCALED) */
+    /* Длинна стороны ячейки по индексу */
     public double stepMeters(int cellIndex) {
         return scaledToMeters(stepsScaled[cellIndex]);
     }

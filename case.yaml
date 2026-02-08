@@ -88,8 +88,8 @@ materials:
             - name: "middle-box"
               selector:
                   type: BOX
-                  min: [3, 3, 3]
-                  max: [6, 6, 6]
+                  min: [1, 3, 3]
+                  max: [8, 6, 6]
               value: material2
 
 temperature:
@@ -105,9 +105,9 @@ temperature:
         rules:
             - name: "warm"
               selector:
-                  type: BOX
-                  min: [1, 3, 3]
-                  max: [9, 6, 6]
+                  type: Z_RANGE
+                  zMin: 4
+                  zMax: 6
               value: temp2
 
 profiles:

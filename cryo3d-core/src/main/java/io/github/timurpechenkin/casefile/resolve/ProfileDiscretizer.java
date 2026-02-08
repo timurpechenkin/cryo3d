@@ -10,20 +10,25 @@ import io.github.timurpechenkin.casefile.dto.measurement.ProfileDto;
 import io.github.timurpechenkin.domain.grid.Grid;
 import io.github.timurpechenkin.domain.measurement.Profile;
 import io.github.timurpechenkin.domain.measurement.ProfileGrid;
-import io.github.timurpechenkin.domain.model.AbstractField3D;
+import io.github.timurpechenkin.domain.model.Field2D;
+import io.github.timurpechenkin.domain.model.Field3D;
 import io.github.timurpechenkin.geometry.Point3D;
 
 public class ProfileDiscretizer {
-    public Profile discretize(Grid grid, ProfileDto profileDto, AbstractField3D field3d) {
+    public Profile discretize(Grid grid, ProfileDto profileDto, Field3D field3d) {
         String name = profileDto.name();
         Point3D pointA = toPoint3d(profileDto.pointA());
         Point3D pointB = toPoint3d(profileDto.pointB());
-        ProfileGrid profileGrid = discretizProfileGrid(grid, field3d, pointA, pointB);
 
-        return new Profile(name, pointA, pointB, profileGrid);
+        List<Cell2D> path = getPath(grid, field3d, pointA, pointB);
+        Field2D field2d = getField2d(path, grid);
+        int[] cellIndex = getCellIndex(path, field3d, field2d);
+        ProfileGrid profileGrid = discretizProfileGrid(path, field2d, grid);
+
+        return new Profile(name, pointA, pointB, profileGrid, field2d, cellIndex);
     }
 
-    private ProfileGrid discretizProfileGrid(Grid grid, AbstractField3D field3d, Point3D pointA, Point3D pointB) {
+    private List<Cell2D> getPath(Grid grid, Field3D field3d, Point3D pointA, Point3D pointB) {
         if (pointA.xScaled() - pointB.xScaled() == 0 && pointA.yScaled() - pointB.yScaled() == 0) {
             throw new IllegalArgumentException("Profile A==B");
         }
@@ -93,29 +98,46 @@ public class ProfileDiscretizer {
                 }
             }
         }
+        return path;
+    }
 
-        int wCount = path.size();
-        int hCount = grid.nz();
-        double[] wMeters = new double[wCount];
-        double[] hMeters = new double[hCount];
-        for (int w = 0; w < wCount; w++) {
+    private Field2D getField2d(List<Cell2D> path, Grid grid) {
+        int width = path.size();
+        int heigth = grid.nz();
+        return new Field2D(width, heigth);
+    }
+
+    private int[] getCellIndex(List<Cell2D> path, Field3D field3d, Field2D field2d) {
+        int width = field2d.width();
+        int heigth = field2d.height();
+
+        // Заполняем массив индексов ячеек по контракту idx = w + width*h
+        int[] cellIndex = new int[width * heigth];
+        for (int h = 0; h < heigth; h++) {
+            for (int w = 0; w < width; w++) {
+                Cell2D cell2d = path.get(w);
+                int idx3d = field3d.index(cell2d.ix(), cell2d.iy(), h);
+                int idx2d = field2d.index(w, h);
+                cellIndex[idx2d] = idx3d;
+            }
+        }
+        return cellIndex;
+    }
+
+    private ProfileGrid discretizProfileGrid(List<Cell2D> path, Field2D field2d, Grid grid) {
+        int width = field2d.width();
+        int heigth = field2d.height();
+
+        double[] wMeters = new double[width];
+        double[] hMeters = new double[heigth];
+        for (int w = 0; w < width; w++) {
             wMeters[w] = path.get(w).wMeters();
         }
-        for (int h = 0; h < hCount; h++) {
+        for (int h = 0; h < heigth; h++) {
             hMeters[h] = grid.centerZMeters(h);
         }
 
-        // Заполняем массив индексов ячеек по контракту idx = w + wCount*h (w — fastest)
-        int[] cellIndex = new int[wCount * hCount];
-        for (int h = 0; h < hCount; h++) {
-            for (int w = 0; w < wCount; w++) {
-                Cell2D cell2d = path.get(w);
-                int idx3d = field3d.index(cell2d.ix(), cell2d.iy(), h);
-                cellIndex[w + wCount * h] = idx3d;
-            }
-        }
-
-        return new ProfileGrid(wCount, hCount, cellIndex, wMeters, hMeters);
+        return new ProfileGrid(wMeters, hMeters);
     }
 
     private Point3D toPoint3d(PointDto dto) {

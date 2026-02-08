@@ -14,26 +14,25 @@ public final class ProfileCsvWriter {
 
     public void writeMaterialGridCsv(Path outDir, Profile profile,
             MaterialField matField, MaterialLibrary matLib) throws IOException {
-
+        int width = profile.field2d().width();
+        int height = profile.field2d().height();
         ProfileGrid pg = profile.grid();
         Path file = outDir.resolve("profiles")
                 .resolve("profile_" + safe(profile.name()) + "_materials.csv");
 
         try (BufferedWriter w = Csv.writer(file)) {
-            // header: w meters
             w.write("h\\w");
-            for (int wi = 0; wi < pg.wCellsCount(); wi++) {
+            for (int wi = 0; wi < width; wi++) {
                 w.write(",");
                 w.write(Double.toString(pg.wCentersMeters()[wi]));
             }
             w.newLine();
 
-            // rows by h
-            for (int hi = 0; hi < pg.hCellsCount(); hi++) {
+            for (int hi = 0; hi < height; hi++) {
                 w.write(Double.toString(pg.hCentersMeters()[hi]));
-                for (int wi = 0; wi < pg.wCellsCount(); wi++) {
-                    int idx2d = wi + pg.wCellsCount() * hi; // IMPORTANT CONTRACT
-                    int idx3d = pg.cellIndex()[idx2d];
+                for (int wi = 0; wi < width; wi++) {
+                    int idx2d = profile.field2d().index(wi, hi);
+                    int idx3d = profile.cellIndex()[idx2d];
 
                     int matIndex = matField.materialIndexByCell()[idx3d];
                     String matName = matLib.getByIndex(matIndex).name();
@@ -48,25 +47,25 @@ public final class ProfileCsvWriter {
 
     public void writeTemperatureGridCsv(Path outDir, Profile profile,
             TemperatureField tempField) throws IOException {
-
+        int width = profile.field2d().width();
+        int height = profile.field2d().height();
         ProfileGrid pg = profile.grid();
         Path file = outDir.resolve("profiles")
                 .resolve("profile_" + safe(profile.name()) + "_temperature0.csv");
 
         try (BufferedWriter w = Csv.writer(file)) {
-            // header
             w.write("h\\w");
-            for (int wi = 0; wi < pg.wCellsCount(); wi++) {
+            for (int wi = 0; wi < width; wi++) {
                 w.write(",");
                 w.write(Double.toString(pg.wCentersMeters()[wi]));
             }
             w.newLine();
 
-            for (int hi = 0; hi < pg.hCellsCount(); hi++) {
+            for (int hi = 0; hi < height; hi++) {
                 w.write(Double.toString(pg.hCentersMeters()[hi]));
-                for (int wi = 0; wi < pg.wCellsCount(); wi++) {
-                    int idx2d = wi + pg.wCellsCount() * hi;
-                    int idx3d = pg.cellIndex()[idx2d];
+                for (int wi = 0; wi < width; wi++) {
+                    int idx2d = profile.field2d().index(wi, hi);
+                    int idx3d = profile.cellIndex()[idx2d];
 
                     double t = tempField.temperatureCByCell()[idx3d];
 
@@ -81,7 +80,8 @@ public final class ProfileCsvWriter {
     public void writeSamplesCsv(Path outDir, Profile profile,
             MaterialField matField, MaterialLibrary matLib,
             TemperatureField tempField) throws IOException {
-
+        int width = profile.field2d().width();
+        int height = profile.field2d().height();
         ProfileGrid pg = profile.grid();
         Path file = outDir.resolve("profiles")
                 .resolve("profile_" + safe(profile.name()) + "_samples.csv");
@@ -90,10 +90,10 @@ public final class ProfileCsvWriter {
             w.write("wIndex,hIndex,wMeters,hMeters,cellIndex,material,temperatureC");
             w.newLine();
 
-            for (int hi = 0; hi < pg.hCellsCount(); hi++) {
-                for (int wi = 0; wi < pg.wCellsCount(); wi++) {
-                    int idx2d = wi + pg.wCellsCount() * hi;
-                    int idx3d = pg.cellIndex()[idx2d];
+            for (int hi = 0; hi < height; hi++) {
+                for (int wi = 0; wi < width; wi++) {
+                    int idx2d = profile.field2d().index(wi, hi);
+                    int idx3d = profile.cellIndex()[idx2d];
 
                     int matIndex = matField.materialIndexByCell()[idx3d];
                     String matName = matLib.getByIndex(matIndex).name();
