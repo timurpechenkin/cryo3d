@@ -62,21 +62,21 @@ public record AxisGrid(
 
     /* Коордната края ячейки по индексу (не SCALED) */
     public double edgeMeters(int edgeIndex) {
-        return toMeters(edgesScaled[edgeIndex]);
+        return scaledToMeters(edgesScaled[edgeIndex]);
     }
 
     /* Коордната центра ячейки по индексу (не SCALED) */
     public double centerMeters(int cellIndex) {
-        return toMeters2(centersScaled2[cellIndex]);
+        return scaled2ToMeters(centersScaled2[cellIndex]);
     }
 
     /* Длинна стороны ячейки по индексу (не SCALED) */
     public double stepMeters(int cellIndex) {
-        return toMeters(stepsScaled[cellIndex]);
+        return scaledToMeters(stepsScaled[cellIndex]);
     }
 
     /* Длинна оси (не SCALED) */
     public double sizeMeters() {
-        return toMeters(sizeScaled());
+        return scaledToMeters(sizeScaled());
     }
 }

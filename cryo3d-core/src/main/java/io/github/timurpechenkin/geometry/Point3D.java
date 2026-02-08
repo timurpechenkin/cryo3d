@@ -4,14 +4,14 @@ import static io.github.timurpechenkin.geometry.GeometryScale.*;
 
 public record Point3D(int xScaled, int yScaled, int zScaled) {
     public double xMeters() {
-        return toMeters(xScaled);
+        return scaledToMeters(xScaled);
     }
 
     public double yMeters() {
-        return toMeters(yScaled);
+        return scaledToMeters(yScaled);
     }
 
     public double zMeters() {
-        return toMeters(zScaled);
+        return scaledToMeters(zScaled);
     }
 }

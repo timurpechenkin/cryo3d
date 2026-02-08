@@ -8,9 +8,14 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.material.MaterialField;
+import io.github.timurpechenkin.domain.material.MaterialLibrary;
+import io.github.timurpechenkin.domain.measurement.Profile;
+import io.github.timurpechenkin.domain.temperature.TemperatureField;
 
 public class OutputWriter {
     private final ObjectMapper jsonMapper;
+    private final ProfileCsvWriter profileCsvWriter = new ProfileCsvWriter();
 
     public OutputWriter() {
         this.jsonMapper = JsonMapper.builder()
@@ -28,5 +33,13 @@ public class OutputWriter {
 
         Path file = outDir.resolve("summary.json");
         jsonMapper.writeValue(file.toFile(), summary);
+
+        TemperatureField temperatureField = c.temperatureField();
+        MaterialField materialField = c.materialField();
+        MaterialLibrary materialLibrary = c.materialLibrary();
+        for (Profile profile : c.profiles()) {
+            profileCsvWriter.writeMaterialGridCsv(outDir, profile, materialField, materialLibrary);
+            profileCsvWriter.writeTemperatureGridCsv(outDir, profile, temperatureField);
+        }
     }
 }

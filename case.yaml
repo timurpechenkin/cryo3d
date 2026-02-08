@@ -9,19 +9,16 @@ grid:
     axes:
         X:
             - from: 0.0
-              to: 40.0
-              step: 0.5
+              to: 10.0
+              step: 1.0
         Y:
             - from: 0.0
-              to: 40.0
-              step: 0.5
+              to: 10.0
+              step: 1.0
         Z:
             - from: 0.0
-              to: 2.0
-              step: 0.1
-            - from: 2.0
-              to: 40.0
-              step: 0.5
+              to: 10.0
+              step: 1.0
 
 boundaryConditions:
     # тип граничного условия (FIRST_KIND, SECOND_KIND, THIRD_KIND)
@@ -88,18 +85,12 @@ materials:
     field:
         default: material1
         rules:
-            - name: "right-2-3"
+            - name: "middle-box"
               selector:
                   type: BOX
-                  min: [6.666, 0.0, 0.0]
-                  max: [20.0, 20.0, 10.0]
+                  min: [3, 3, 3]
+                  max: [6, 6, 6]
               value: material2
-            - name: "mid"
-              selector:
-                  type: Z_RANGE
-                  zMin: 20.0
-                  zMax: 25.0
-              value: material3
 
 temperature:
     definitions:
@@ -108,22 +99,25 @@ temperature:
             temperature: -2.0
         temp2:
             type: CONSTANT
-            temperature: 2.0
+            temperature: 1.0
     field:
         default: temp1
         rules:
-            - name: "warm-top"
+            - name: "warm"
               selector:
-                  type: Z_RANGE
-                  zMin: 0.0
-                  zMax: 1.0
+                  type: BOX
+                  min: [1, 3, 3]
+                  max: [9, 6, 6]
               value: temp2
 
 profiles:
-    - name: "centerline"
-      pointA: [10.0, 10.0, 0.0]
-      pointB: [10.0, 10.0, 0.0]
+    - name: "line-y"
+      pointA: [5.0, 0.0, 0.0]
+      pointB: [5.0, 10.0, 0.0]
+    - name: "line-x"
+      pointA: [0.0, 5.0, 0.0]
+      pointB: [10.0, 5.0, 0.0]
 
 samplePoints:
     - name: "center"
-      point: [10.0, 10.0, 10.0]
+      point: [5.0, 5.0, 5.0]

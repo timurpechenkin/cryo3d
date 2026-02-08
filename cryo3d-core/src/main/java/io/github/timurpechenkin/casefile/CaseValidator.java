@@ -62,9 +62,9 @@ public final class CaseValidator {
                         double to = s.to();
                         double step = s.step();
 
-                        int intFrom = toScaled(from);
-                        int intTo = toScaled(to);
-                        int intStep = toScaled(step);
+                        int intFrom = metersToScaled(from);
+                        int intTo = metersToScaled(to);
+                        int intStep = metersToScaled(step);
 
                         // Проверка кратности длинны сегмента и шага
                         if ((intTo - intFrom) % intStep != 0) {

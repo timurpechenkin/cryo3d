@@ -1,6 +1,6 @@
 package io.github.timurpechenkin.domain.measurement;
 
-public record ProfileGrid(String name, int wCount, int hCount, double wStepMeters, double hStepMeters, int[] cellIndex,
-                double[] wMeters, double[] hMeters) {
+public record ProfileGrid(int wCellsCount, int hCellsCount, int[] cellIndex,
+        double[] wCentersMeters, double[] hCentersMeters) {
 
 }

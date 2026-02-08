@@ -1,6 +1,6 @@
 package io.github.timurpechenkin.casefile;
 
-import static io.github.timurpechenkin.geometry.GeometryScale.toScaled;
+import static io.github.timurpechenkin.geometry.GeometryScale.metersToScaled;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +16,7 @@ import io.github.timurpechenkin.casefile.dto.time.TimeSettingsDto;
 import io.github.timurpechenkin.casefile.resolve.BoundaryConditionDiscretizer;
 import io.github.timurpechenkin.casefile.resolve.GridResolver;
 import io.github.timurpechenkin.casefile.resolve.MaterialDiscretizer;
+import io.github.timurpechenkin.casefile.resolve.ProfileDiscretizer;
 import io.github.timurpechenkin.casefile.resolve.TemperatureDiscretizer;
 import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.domain.bc.BoundaryCondition;
@@ -38,6 +39,7 @@ public final class CaseResolver {
     private final MaterialDiscretizer materialDiscretizer = new MaterialDiscretizer();
     private final TemperatureDiscretizer temperatureDiscretizer = new TemperatureDiscretizer();
     private final BoundaryConditionDiscretizer bcDiscretizer = new BoundaryConditionDiscretizer();
+    private final ProfileDiscretizer profileDiscretizer = new ProfileDiscretizer();
 
     public SimulationCase resolve(SimulationCaseDto dto) {
         // 1) time
@@ -60,10 +62,14 @@ public final class CaseResolver {
                 temperatureLibrary);
 
         // 5) profiles
-        List<Profile> profiles = resolveProfiles(dto.profiles());
+        List<Profile> profiles = new ArrayList<>();
+        for (ProfileDto profileDto : dto.profiles()) {
+            Profile profile = profileDiscretizer.discretize(grid, profileDto, materialField);
+            profiles.add(profile);
+        }
 
         // 6) sample points
-        List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints(), materialField);
+        List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints(), grid, materialField);
 
         return new SimulationCase(
                 dto.caseName(),
@@ -141,29 +147,19 @@ public final class CaseResolver {
         return lib;
     }
 
-    private List<SamplePoint> resolveSamplePoints(List<SamplePointDto> dtos, AbstractField3D field) {
+    private List<SamplePoint> resolveSamplePoints(List<SamplePointDto> dtos, Grid grid, AbstractField3D field) {
         List<SamplePoint> samplePoints = new ArrayList<>();
         for (SamplePointDto dto : dtos) {
-            int x = toScaled(dto.point().x());
-            int y = toScaled(dto.point().x());
-            int z = toScaled(dto.point().x());
+            int x = grid.findCellX(dto.point().x());
+            int y = grid.findCellX(dto.point().y());
+            int z = grid.findCellX(dto.point().z());
             int cellIndex = field.index(x, y, z);
             samplePoints.add(new SamplePoint(dto.name(), toPoint3d(dto.point()), cellIndex));
         }
         return samplePoints;
     }
 
-    private List<Profile> resolveProfiles(List<ProfileDto> profileDtoList) {
-        List<Profile> profiles = new ArrayList<>(profileDtoList.size());
-        for (ProfileDto profileDto : profileDtoList) {
-            Point3D pointA = toPoint3d(profileDto.pointA());
-            Point3D pointB = toPoint3d(profileDto.pointB());
-            profiles.add(new Profile(profileDto.name(), pointA, pointB));
-        }
-        return profiles;
-    }
-
     private Point3D toPoint3d(PointDto dto) {
-        return new Point3D(toScaled(dto.x()), toScaled(dto.y()), toScaled(dto.z()));
+        return new Point3D(metersToScaled(dto.x()), metersToScaled(dto.y()), metersToScaled(dto.z()));
     }
 }

@@ -44,7 +44,7 @@ public class GridResolver {
         int idx = 0;
 
         // Стартовая граница
-        edges[0] = toScaled(segments.get(0).from());
+        edges[0] = metersToScaled(segments.get(0).from());
 
         // Защита стыковки сегментов (на всякий случай)
         int expectedFrom = edges[0];
@@ -52,15 +52,15 @@ public class GridResolver {
         for (int si = 0; si < segments.size(); si++) {
             Segment s = segments.get(si);
 
-            int from = toScaled(s.from());
-            int to = toScaled(s.to());
-            int step = toScaled(s.step());
+            int from = metersToScaled(s.from());
+            int to = metersToScaled(s.to());
+            int step = metersToScaled(s.step());
 
             if (from != expectedFrom) {
                 throw new IllegalArgumentException(
                         "Segments are not contiguous for axis " + axis +
-                                ": expected from=" + toMeters(expectedFrom) +
-                                " but got from=" + toMeters(from));
+                                ": expected from=" + scaledToMeters(expectedFrom) +
+                                " but got from=" + scaledToMeters(from));
             }
 
             int n = (to - from) / step;
@@ -86,9 +86,9 @@ public class GridResolver {
     }
 
     private static int segmentCellsScaled(Segment s, Axis axis) {
-        int from = toScaled(s.from());
-        int to = toScaled(s.to());
-        int step = toScaled(s.step());
+        int from = metersToScaled(s.from());
+        int to = metersToScaled(s.to());
+        int step = metersToScaled(s.step());
 
         if (step <= 0) {
             throw new IllegalArgumentException("Non-positive step for axis " + axis + ": " + s.step());
@@ -101,7 +101,7 @@ public class GridResolver {
         if (len % step != 0) {
             throw new IllegalArgumentException(
                     "Segment is not divisible by step for axis " + axis +
-                            ": (to-from)=" + toMeters(len) + " step=" + toMeters(step) +
+                            ": (to-from)=" + scaledToMeters(len) + " step=" + scaledToMeters(step) +
                             " (scaled len=" + len + ", step=" + step + ")");
         }
         return len / step;

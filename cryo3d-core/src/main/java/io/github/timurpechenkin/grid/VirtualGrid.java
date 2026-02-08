@@ -68,29 +68,29 @@ public class VirtualGrid implements Grid {
     // Поиск индекса ячейки по координате
 
     public int findCellX(double xMeters) {
-        return findCellScaled(x().edgesScaled(), toScaled(xMeters));
+        return findCellScaled(x().edgesScaled(), metersToScaled(xMeters));
     }
 
     public int findCellY(double yMeters) {
-        return findCellScaled(y().edgesScaled(), toScaled(yMeters));
+        return findCellScaled(y().edgesScaled(), metersToScaled(yMeters));
     }
 
     public int findCellZ(double zMeters) {
-        return findCellScaled(z().edgesScaled(), toScaled(zMeters));
+        return findCellScaled(z().edgesScaled(), metersToScaled(zMeters));
     }
 
     // Длинна осей
 
     public double sizeMetersX() {
-        return toMeters(edgesScaledX()[nx()] - edgesScaledX()[0]);
+        return scaledToMeters(edgesScaledX()[nx()] - edgesScaledX()[0]);
     }
 
     public double sizeMetersY() {
-        return toMeters(edgesScaledY()[ny()] - edgesScaledY()[0]);
+        return scaledToMeters(edgesScaledY()[ny()] - edgesScaledY()[0]);
     }
 
     public double sizeMetersZ() {
-        return toMeters(edgesScaledZ()[nz()] - edgesScaledZ()[0]);
+        return scaledToMeters(edgesScaledZ()[nz()] - edgesScaledZ()[0]);
     }
 
     // ----- ВНУТРЕННИЙ API (scaled int) -----
