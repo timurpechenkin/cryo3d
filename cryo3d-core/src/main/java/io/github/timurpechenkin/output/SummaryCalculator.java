@@ -1,5 +1,7 @@
 package io.github.timurpechenkin.output;
 
+import static io.github.timurpechenkin.geometry.GeometryScale.scaledToMeters;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -8,11 +10,12 @@ import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.domain.bc.BoundaryCondition;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionField;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
-import io.github.timurpechenkin.domain.grid.Grid;
+import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
+import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Face;
 import io.github.timurpechenkin.output.Summary.BoundaryConditionStatus;
 import io.github.timurpechenkin.output.Summary.FaceBC;
@@ -43,12 +46,12 @@ public final class SummaryCalculator {
         return summary;
     }
 
-    private static GridStats gridStats(Grid grid) {
+    private static GridStats gridStats(Grid3D grid) {
         GridStats gridStats = new GridStats(
                 grid.cellCount(),
-                grid.sizeMetersX(),
-                grid.sizeMetersY(),
-                grid.sizeMetersZ());
+                scaledToMeters(grid.sizeScaled(Axis3D.X)),
+                scaledToMeters(grid.sizeScaled(Axis3D.Y)),
+                scaledToMeters(grid.sizeScaled(Axis3D.Z)));
         return gridStats;
     }
 

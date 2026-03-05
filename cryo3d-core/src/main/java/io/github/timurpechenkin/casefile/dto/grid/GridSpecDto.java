@@ -5,9 +5,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.github.timurpechenkin.geometry.Axis;
+import io.github.timurpechenkin.geometry.Axis3D;
 import jakarta.validation.Valid;
 
 public record GridSpecDto(
-                @Valid @JsonProperty("axes") Map<Axis, List<Segment>> axesSegments) {
+        @Valid @JsonProperty("axes") Map<Axis3D, List<Segment>> axesSegments) {
 }

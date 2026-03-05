@@ -17,7 +17,7 @@ import io.github.timurpechenkin.casefile.dto.selector.Selector;
 import io.github.timurpechenkin.casefile.dto.selector.ZRangeSelector;
 import io.github.timurpechenkin.casefile.dto.temperature.TemperatureDefinition;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
-import io.github.timurpechenkin.geometry.Axis;
+import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Face;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -48,9 +48,9 @@ public final class CaseValidator {
         if (simulationCase.grid() == null) {
             result.add("grid", "grid params must not be empty");
         } else {
-            Map<Axis, List<Segment>> axesSegments = simulationCase.grid().axesSegments();
+            Map<Axis3D, List<Segment>> axesSegments = simulationCase.grid().axesSegments();
 
-            for (Axis axis : axesSegments.keySet()) {
+            for (Axis3D axis : axesSegments.keySet()) {
                 List<Segment> segments = axesSegments.get(axis);
                 if (segments == null || segments.isEmpty()) {
                     result.add("grid.axes." + axis.name(), "axis segment must not be empty");

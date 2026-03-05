@@ -3,8 +3,7 @@ package io.github.timurpechenkin.domain.bc;
 import java.util.EnumMap;
 import java.util.Objects;
 
-import io.github.timurpechenkin.domain.grid.Grid;
-import io.github.timurpechenkin.domain.model.Field2D;
+import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.geometry.Face;
 
 /**
@@ -24,7 +23,7 @@ import io.github.timurpechenkin.geometry.Face;
  *
  * <p>
  * Размеры граней (width/height) НЕ хранятся явно, а вычисляются на основе
- * {@link Grid}.
+ * {@link Grid3D}.
  * Это гарантирует консистентность размеров при любых изменениях сетки.
  * </p>
  */
@@ -40,12 +39,6 @@ public final class BoundaryConditionField {
     private final EnumMap<Face, int[]> faceBcIndex;
 
     /**
-     * Двухмерные поля по граням.
-     *
-     */
-    private final EnumMap<Face, Field2D> faceField;
-
-    /**
      * Создаёт поле граничных условий.
      *
      * @param faceBcIndex отображение грань → массив индексов BC
@@ -56,41 +49,8 @@ public final class BoundaryConditionField {
      * @throws IllegalArgumentException если длина массива для какой-либо грани
      *                                  не равна {@code width(face) * height(face)}
      */
-    public BoundaryConditionField(EnumMap<Face, int[]> faceBcIndex, Grid grid) {
+    public BoundaryConditionField(EnumMap<Face, int[]> faceBcIndex) {
         this.faceBcIndex = Objects.requireNonNull(faceBcIndex, "faceBcIndex");
-        Objects.requireNonNull(grid, "grid");
-
-        // Проверка консистентности размеров массивов
-        EnumMap<Face, Field2D> map = new EnumMap<>(Face.class);
-        for (Face f : Face.values()) {
-            int[] arr = faceBcIndex.get(f);
-            if (arr == null) {
-                throw new IllegalArgumentException("There is no boundary condition index arraye for face " + f);
-            }
-
-            int height = switch (f) {
-                case X_MIN, X_MAX -> grid.nz();
-                case Y_MIN, Y_MAX -> grid.nz();
-                case Z_MIN, Z_MAX -> grid.ny();
-            };
-            int width = switch (f) {
-                case X_MIN, X_MAX -> grid.ny();
-                case Y_MIN, Y_MAX -> grid.nx();
-                case Z_MIN, Z_MAX -> grid.nx();
-            };
-
-            int expected = width * height;
-            if (arr.length != expected) {
-                throw new IllegalArgumentException(
-                        "Face " + f + ": array length " + arr.length +
-                                " != width*height = " + width + "*" + height +
-                                " = " + expected);
-            }
-
-            map.put(f, new Field2D(width, height));
-        }
-
-        faceField = new EnumMap<>(map);
     }
 
     /**
@@ -107,19 +67,5 @@ public final class BoundaryConditionField {
             throw new IllegalArgumentException("No BC array for face: " + face);
         }
         return arr;
-    }
-
-    /**
-     * Возвращает индекс граничного условия (BC) для заданной грани
-     * и координат на этой грани.
-     *
-     * @param face грань
-     * @param w    координата по ширине
-     * @param h    координата по высоте
-     * @return индекс BC в {@link BoundaryConditionLibrary}
-     */
-    public int bcIndex(Face face, int w, int h) {
-        Field2D field2d = faceField.get(face);
-        return raw(face)[field2d.index(w, h)];
     }
 }

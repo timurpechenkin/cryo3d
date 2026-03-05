@@ -1,5 +1,5 @@
 package io.github.timurpechenkin.geometry;
 
-public enum Axis {
+public enum Axis3D {
     X, Y, Z
 }

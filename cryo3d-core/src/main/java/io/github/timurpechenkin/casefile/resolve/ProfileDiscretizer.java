@@ -3,148 +3,296 @@ package io.github.timurpechenkin.casefile.resolve;
 import static io.github.timurpechenkin.geometry.GeometryScale.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 
 import io.github.timurpechenkin.casefile.dto.measurement.PointDto;
 import io.github.timurpechenkin.casefile.dto.measurement.ProfileDto;
-import io.github.timurpechenkin.domain.grid.Grid;
+import io.github.timurpechenkin.domain.grid.AxisGrid;
+import io.github.timurpechenkin.domain.grid.Grid2D;
+import io.github.timurpechenkin.domain.grid.Grid3D;
+import io.github.timurpechenkin.domain.grid.VirtualGrid2D;
 import io.github.timurpechenkin.domain.measurement.Profile;
-import io.github.timurpechenkin.domain.measurement.ProfileGrid;
-import io.github.timurpechenkin.domain.model.Field2D;
-import io.github.timurpechenkin.domain.model.Field3D;
+import io.github.timurpechenkin.geometry.Axis2D;
+import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Point3D;
 
 public class ProfileDiscretizer {
-    public Profile discretize(Grid grid, ProfileDto profileDto, Field3D field3d) {
+    /**
+     * Дискретизирует профиль (вертикальную плоскость), проходящий через 3D-сетку.
+     *
+     * <p>
+     * <b>Геометрия профиля</b>:
+     * профиль задаётся двумя точками {@code A(xA,yA,zA)} и {@code B(xB,yB,zB)}.
+     * В текущей реализации используется вертикальная плоскость, определяемая
+     * отрезком {@code Axy–Bxy} в горизонтальной плоскости XY и направлением оси Z
+     * сетки.
+     * Координаты {@code zA} и {@code zB} не влияют на форму профиля:
+     * по высоте берётся вся дискретизация оси Z исходной 3D-сетки.
+     *
+     * <p>
+     * <b>Построение дискретизации</b>:
+     * <ul>
+     * <li>
+     * В плоскости XY выполняется трассировка отрезка {@code Axy–Bxy} по ячейкам
+     * структурированной сетки. На каждом шаге выбирается ближайшее следующее
+     * пересечение отрезка с ребром
+     * сетки по оси X или Y, после чего выполняется переход в соседнюю XY-ячейку
+     * (при одновременном
+     * пересечении двух рёбер — переход по обеим осям).
+     * </li>
+     * <li>Одновременно строится ось {@code W} профиля как набор рёбер
+     * {@code edgesWScaled} (в SCALE),
+     * где {@code edgesWScaled[0] = 0}, {@code edgesWScaled[last] = length(A,B)}.
+     * Каждому интервалу {@code [edgesWScaled[p], edgesWScaled[p+1])} соответствует
+     * одна XY-ячейка
+     * {@code cells[p]}.</li>
+     * <li>Формируется 2D-сетка профиля:
+     * ось {@code H} совпадает с осью {@code Z} 3D-сетки,
+     * ось {@code W} — расстояние вдоль отрезка {@code A→B}.</li>
+     * <li>Формируется массив {@code cellIndex} длиной {@code grid2d.cellCount()},
+     * который отображает каждую ячейку профиля {@code (w,h)} в линейный индекс
+     * ячейки исходной 3D-сетки
+     * {@code (px,py,z=h)}.</li>
+     * </ul>
+     *
+     * @param grid3d     исходная 3D-сетка
+     * @param profileDto описание профиля (точки A и B)
+     * @return профиль с 2D-сеткой и отображением ячеек профиля в ячейки 3D-сетки
+     *
+     * @throws IllegalArgumentException  если точки A и B совпадают в XY или профиль
+     *                                   вырожден
+     * @throws IndexOutOfBoundsException если точки A или B выходят за пределы
+     *                                   3D-сетки по X/Y
+     */
+    public Profile discretize(Grid3D grid3d, ProfileDto profileDto) {
         String name = profileDto.name();
         Point3D pointA = toPoint3d(profileDto.pointA());
         Point3D pointB = toPoint3d(profileDto.pointB());
 
-        List<Cell2D> path = getPath(grid, field3d, pointA, pointB);
-        Field2D field2d = getField2d(path, grid);
-        int[] cellIndex = getCellIndex(path, field3d, field2d);
-        ProfileGrid profileGrid = discretizProfileGrid(path, field2d, grid);
+        // общая длина профиля (A->B) в SCALE
+        double lengthMeters = Math.hypot(pointB.xMeters() - pointA.xMeters(), pointB.yMeters() - pointA.yMeters());
+        int lengthScaled = metersToScaled(lengthMeters);
 
-        return new Profile(name, pointA, pointB, profileGrid, field2d, cellIndex);
+        ProfilePath2D path = tracePathXY(grid3d, pointA, pointB, lengthScaled);
+        Grid2D grid2d = buildProfileGrid2D(path, grid3d);
+        int[] cellIndex = buildCellIndex(path, grid2d, grid3d);
+
+        return new Profile(name, pointA, pointB, grid2d, cellIndex);
     }
 
-    private List<Cell2D> getPath(Grid grid, Field3D field3d, Point3D pointA, Point3D pointB) {
-        if (pointA.xScaled() - pointB.xScaled() == 0 && pointA.yScaled() - pointB.yScaled() == 0) {
-            throw new IllegalArgumentException("Profile A==B");
+    private ProfilePath2D tracePathXY(Grid3D grid3d, Point3D a, Point3D b, int lengthScaled) {
+        int ax = a.xScaled();
+        int ay = a.yScaled();
+        int bx = b.xScaled();
+        int by = b.yScaled();
+
+        if (ax == bx && ay == by) {
+            throw new IllegalArgumentException("Profile A==B in XY");
         }
 
-        double ax = pointA.xMeters();
-        double ay = pointA.yMeters();
-        double bx = pointB.xMeters();
-        double by = pointB.yMeters();
+        // Стартовая и конечная ячейки (внутри сетки; findCellScaled бросит, если вне)
+        int px = grid3d.findCellScaled(Axis3D.X, ax);
+        int py = grid3d.findCellScaled(Axis3D.Y, ay);
+        // int pxEnd = grid3d.findCellScaled(Axis3D.X, bx);
+        // int pyEnd = grid3d.findCellScaled(Axis3D.Y, by);
 
-        double dx = bx - ax;
-        double dy = by - ay;
+        int[] xEdges = grid3d.edgesScaled(Axis3D.X); // SCALE
+        int[] yEdges = grid3d.edgesScaled(Axis3D.Y); // SCALE
 
-        boolean xMain = Math.abs(dx) > Math.abs(dy);
+        int dx = bx - ax;
+        int dy = by - ay;
 
-        List<Cell2D> path = new ArrayList<>();
+        // Направление движения по осям (по ячейкам)
+        int stepX = Integer.compare(dx, 0); // -1,0,+1
+        int stepY = Integer.compare(dy, 0);
 
-        if (xMain) {
-            int ix0 = grid.findCellX(Math.min(ax, bx));
-            int ix1 = grid.findCellX(Math.max(ax, bx));
+        double t = 0.0;
 
-            if (ix0 < 0 || ix1 < 0)
-                throw new IllegalArgumentException("ix0 < 0 || ix1 < 0");
+        // Списки результатов
+        List<Integer> edgesW = new ArrayList<>();
+        List<CellXY> cells = new ArrayList<>();
 
-            for (int ix = ix0; ix <= ix1; ix++) {
-                double x = grid.centerXMeters(ix);
-                double t = (x - ax) / dx;
+        // первое ребро профиля всегда в начале отрезка
+        edgesW.add(0);
 
-                if (t < 0 || t > 1)
-                    continue;
+        // Защита от бесконечного цикла (если что-то пойдёт совсем не так)
+        int safety = (grid3d.n(Axis3D.X) + grid3d.n(Axis3D.Y) + 10) * 4;
 
-                double y = ay + t * dy;
-                int iy = grid.findCellY(y);
-
-                if (iy < 0)
-                    continue;
-
-                Cell2D lastCell = path.isEmpty() ? null : path.get(path.size() - 1);
-                if (lastCell == null || lastCell.ix() != ix || lastCell.iy() != iy) {
-                    double w = t * Math.hypot(dx, dy);
-                    path.add(new Cell2D(ix, iy, w));
-                }
+        while (true) {
+            if (safety-- <= 0) {
+                throw new IllegalStateException("Profile traversal safety limit exceeded");
             }
-        } else {
-            int iy0 = grid.findCellY(Math.min(ay, by));
-            int iy1 = grid.findCellY(Math.max(ay, by));
 
-            if (iy0 < 0 || iy1 < 0)
-                throw new IllegalArgumentException("iy0 < 0 || iy1 < 0");
+            // Следующее пересечение по X:
+            double tNextX = Double.POSITIVE_INFINITY;
+            if (stepX != 0) {
+                // Позиция ребра, которое мы пересечём следующим:
+                // если идём вправо, то правое ребро текущей ячейки: e = px+1
+                // если идём влево, то левое ребро текущей ячейки: e = px
+                int eX = (stepX > 0) ? (px + 1) : px;
+                int xEdge = xEdges[eX];
+                tNextX = (double) (xEdge - ax) / (double) dx;
+            }
 
-            for (int iy = iy0; iy <= iy1; iy++) {
-                double y = grid.centerYMeters(iy);
+            // Следующее пересечение по Y:
+            double tNextY = Double.POSITIVE_INFINITY;
+            if (stepY != 0) {
+                int eY = (stepY > 0) ? (py + 1) : py;
+                int yEdge = yEdges[eY];
+                tNextY = (double) (yEdge - ay) / (double) dy;
+            }
 
-                double t = (y - ay) / dy;
-                if (t < 0 || t > 1)
-                    continue;
+            // Берём ближайшее событие
+            double tNext = Math.min(tNextX, tNextY);
 
-                double x = ax + t * dx;
+            // Численная устойчивость
+            if (!(tNext > t)) {
+                // если из-за округления получили "не вперёд", двигаемся чуть-чуть
+                tNext = Math.nextUp(t);
+            }
 
-                int ix = grid.findCellX(x);
-                if (ix < 0)
-                    continue;
+            // Ограничиваемся [0,1]
+            if (tNext > 1.0)
+                tNext = 1.0;
 
-                Cell2D lastCell = path.isEmpty() ? null : path.get(path.size() - 1);
-                if (lastCell == null || lastCell.ix() != ix || lastCell.iy() != iy) {
-                    double w = t * Math.hypot(dx, dy);
-                    path.add(new Cell2D(ix, iy, w));
-                }
+            // Текущая ячейка соответствует интервалу [t, tNext)
+            cells.add(new CellXY(px, py));
+
+            // Добавляем ребро по W (в SCALE)
+            int wEdge = (int) Math.round(tNext * (double) lengthScaled);
+
+            // Обеспечим строгий рост ребер: edges[p+1] > edges[p]
+            int last = edgesW.get(edgesW.size() - 1);
+            if (wEdge <= last) {
+                wEdge = last + 1;
+            }
+            if (wEdge > lengthScaled) {
+                wEdge = lengthScaled;
+            }
+            edgesW.add(wEdge);
+
+            // Если дошли до конца отрезка — выходим
+            if (tNext >= 1.0 || wEdge >= lengthScaled) {
+                System.out.println("tNext = " + tNext);
+                System.out.println("wEdge = " + wEdge);
+                break;
+            }
+
+            // Переходим в следующую ячейку: по X, по Y или по обеим (если угол)
+            boolean crossX = Math.abs(tNext - tNextX) <= 1e-15;
+            boolean crossY = Math.abs(tNext - tNextY) <= 1e-15;
+
+            if (crossX)
+                px += stepX;
+            if (crossY)
+                py += stepY;
+
+            t = tNext;
+
+            // // Если дошли до конечной ячейки и т уже близко к 1 — завершаем
+            // if (px == pxEnd && py == pyEnd) {
+            // System.out.println("px = " + px + ", pxEnd = " + pxEnd + ", py = " + py + ",
+            // pyEnd = " + pyEnd);
+            // break;
+            // }
+        }
+
+        // Заменяем последний edge и cell ровно до lengthScaled (если вдруг из-за
+        // clamp/роста
+        // не попали)
+        int lastEdge = edgesW.get(edgesW.size() - 1);
+        if (lastEdge != lengthScaled) {
+            if (lastEdge > lengthScaled) {
+                // крайне редко (из-за last+1), но на всякий случай
+                edgesW.set(edgesW.size() - 1, lengthScaled);
+            } else {
+                edgesW.add(lengthScaled);
             }
         }
-        return path;
+
+        // Приводим к массивам
+        int[] edgesArr = edgesW.stream().mapToInt(Integer::intValue).toArray();
+        CellXY[] cellsArr = cells.toArray(CellXY[]::new);
+
+        System.out.println("edges: " + Arrays.toString(edgesArr));
+        System.out.println("cells: " + Arrays.toString(cellsArr));
+
+        // Инвариант: edges = cells + 1
+        if (edgesArr.length != cellsArr.length + 1) {
+            throw new IllegalStateException("Traversal invariant broken: edges.length = " + edgesArr.length
+                    + ", cells.length = " + cellsArr.length);
+        }
+
+        return new ProfilePath2D(edgesArr, cellsArr);
     }
 
-    private Field2D getField2d(List<Cell2D> path, Grid grid) {
-        int width = path.size();
-        int heigth = grid.nz();
-        return new Field2D(width, heigth);
+    private Grid2D buildProfileGrid2D(ProfilePath2D path, Grid3D grid3d) {
+        EnumMap<Axis2D, AxisGrid> axes = new EnumMap<>(Axis2D.class);
+
+        // H = Z ось 3D-сетки (вертикальное направление профиля)
+        axes.put(Axis2D.H, grid3d.axis(Axis3D.Z));
+
+        // точки пересечения границ ячеек по осям X и Y линией профиля
+        int[] edgesScaled = path.edgesWScaled();
+        int n = edgesScaled.length - 1;
+        int[] stepsScaled = new int[n];
+        int[] centersScaled2 = new int[n];
+
+        // шаги отрезков = разница между w координатами правого и левого ребр,
+        // удвоенный центр = сумма w координаты правого и левого ребра
+        for (int p = 0; p < n; p++) {
+            int left = edgesScaled[p];
+            int right = edgesScaled[p + 1];
+            stepsScaled[p] = right - left;
+            centersScaled2[p] = right + left; // SCALED2
+        }
+
+        AxisGrid axisW = new AxisGrid(edgesScaled, centersScaled2, stepsScaled);
+        axes.put(Axis2D.W, axisW);
+
+        return new VirtualGrid2D(axes);
     }
 
-    private int[] getCellIndex(List<Cell2D> path, Field3D field3d, Field2D field2d) {
-        int width = field2d.width();
-        int heigth = field2d.height();
+    private int[] buildCellIndex(ProfilePath2D path, Grid2D grid2d, Grid3D grid3d) {
+        int nWidth = grid2d.n(Axis2D.W);
+        int nHeight = grid2d.n(Axis2D.H);
 
         // Заполняем массив индексов ячеек по контракту idx = w + width*h
-        int[] cellIndex = new int[width * heigth];
-        for (int h = 0; h < heigth; h++) {
-            for (int w = 0; w < width; w++) {
-                Cell2D cell2d = path.get(w);
-                int idx3d = field3d.index(cell2d.ix(), cell2d.iy(), h);
-                int idx2d = field2d.index(w, h);
+        CellXY[] cells = path.cells();
+        if (cells.length != nWidth) {
+            throw new IllegalStateException("Profile width mismatch: cells.length != grid2d.n(W)");
+        }
+
+        int[] cellIndex = new int[nWidth * nHeight];
+        for (int h = 0; h < nHeight; h++) {
+            for (int w = 0; w < nWidth; w++) {
+                CellXY c = cells[w];
+                int idx3d = grid3d.index(c.px(), c.py(), h);
+                int idx2d = grid2d.index(w, h);
                 cellIndex[idx2d] = idx3d;
             }
         }
         return cellIndex;
     }
 
-    private ProfileGrid discretizProfileGrid(List<Cell2D> path, Field2D field2d, Grid grid) {
-        int width = field2d.width();
-        int heigth = field2d.height();
-
-        double[] wMeters = new double[width];
-        double[] hMeters = new double[heigth];
-        for (int w = 0; w < width; w++) {
-            wMeters[w] = path.get(w).wMeters();
-        }
-        for (int h = 0; h < heigth; h++) {
-            hMeters[h] = grid.centerZMeters(h);
-        }
-
-        return new ProfileGrid(wMeters, hMeters);
-    }
-
     private Point3D toPoint3d(PointDto dto) {
         return new Point3D(metersToScaled(dto.x()), metersToScaled(dto.y()), metersToScaled(dto.z()));
     }
 
-    private record Cell2D(int ix, int iy,
-            double wMeters) {
+    private record ProfilePath2D(
+            int[] edgesWScaled, // длина N+1, edgesWScaled[0]=0, edgesWScaled[N]=lengthScaled
+            CellXY[] cells // длина N, cells[p] соответствует [edges[p], edges[p+1])
+    ) {
+    }
+
+    private record CellXY(int px, int py) {
+
+        @Override
+        public String toString() {
+            return "(" + px + ", " + py + ")";
+        }
+
     }
 }

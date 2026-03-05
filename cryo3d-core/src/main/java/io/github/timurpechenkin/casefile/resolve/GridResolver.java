@@ -8,24 +8,24 @@ import java.util.Map;
 
 import io.github.timurpechenkin.casefile.dto.grid.GridSpecDto;
 import io.github.timurpechenkin.casefile.dto.grid.Segment;
-import io.github.timurpechenkin.geometry.Axis;
-import io.github.timurpechenkin.grid.AxisGrid;
-import io.github.timurpechenkin.grid.VirtualGrid;
+import io.github.timurpechenkin.domain.grid.AxisGrid;
+import io.github.timurpechenkin.domain.grid.VirtualGrid3D;
+import io.github.timurpechenkin.geometry.Axis3D;
 
 public class GridResolver {
 
-    public static VirtualGrid virtualGridFrom(GridSpecDto grid) {
-        Map<Axis, List<Segment>> axesSegments = grid.axesSegments();
+    public static VirtualGrid3D virtualGridFrom(GridSpecDto grid) {
+        Map<Axis3D, List<Segment>> axesSegments = grid.axesSegments();
 
-        EnumMap<Axis, AxisGrid> axesGrids = new EnumMap<>(Axis.class);
-        for (Axis axis : Axis.values()) {
+        EnumMap<Axis3D, AxisGrid> axesGrids = new EnumMap<>(Axis3D.class);
+        for (Axis3D axis : Axis3D.values()) {
             List<Segment> segments = axesSegments.get(axis);
             axesGrids.put(axis, buildAxisGrid(axis, segments));
         }
-        return new VirtualGrid(axesGrids);
+        return new VirtualGrid3D(axesGrids);
     }
 
-    private static AxisGrid buildAxisGrid(Axis axis, List<Segment> segments) {
+    private static AxisGrid buildAxisGrid(Axis3D axis, List<Segment> segments) {
         if (segments == null || segments.isEmpty()) {
             throw new IllegalArgumentException("No segments for axis " + axis);
         }
@@ -85,7 +85,7 @@ public class GridResolver {
         return new AxisGrid(edges, centers, steps);
     }
 
-    private static int segmentCellsScaled(Segment s, Axis axis) {
+    private static int segmentCellsScaled(Segment s, Axis3D axis) {
         int from = metersToScaled(s.from());
         int to = metersToScaled(s.to());
         int step = metersToScaled(s.step());
