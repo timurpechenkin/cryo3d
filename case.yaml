@@ -61,14 +61,14 @@ materials:
     # L - удельная теплота фазового перехода [МДж/м3]
     # Tbf - температура замерзания грунта [°C]
     definitions:
-        material1:
+        m1:
             thermalConductivityThawed: 0.570
             thermalConductivityFrozen: 2.220
             heatCapacityThawed: 4200
             heatCapacityFrozen: 2100
             phaseTransitionsHeat: 334000
             freezingTemperature: 0
-        material2:
+        m2:
             thermalConductivityThawed: 1.000
             thermalConductivityFrozen: 2.500
             heatCapacityThawed: 4500
@@ -83,14 +83,14 @@ materials:
             phaseTransitionsHeat: 100000
             freezingTemperature: -0.5
     field:
-        default: material1
+        default: m1
         rules:
             - name: "middle-box"
               selector:
                   type: BOX
                   min: [1, 3, 3]
                   max: [8, 6, 6]
-              value: material2
+              value: m2
 
 temperature:
     definitions:
