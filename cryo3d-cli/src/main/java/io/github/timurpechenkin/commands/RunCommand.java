@@ -10,6 +10,10 @@ import io.github.timurpechenkin.casefile.validation.ValidationError;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.output.OutputWriter;
+import io.github.timurpechenkin.solver.CaseSolver;
+import io.github.timurpechenkin.solver.calculator.IdentityStepCalculator;
+import io.github.timurpechenkin.solver.context.DirectCaseContext;
+import io.github.timurpechenkin.solver.result.CaseResult;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -29,10 +33,10 @@ public class RunCommand implements Runnable {
             SimulationCaseDto caseDto = loader.load(casePath);
 
             CaseValidator validator = new CaseValidator();
-            ValidationResult result = validator.validate(caseDto);
-            if (!result.isOk()) {
+            ValidationResult validation = validator.validate(caseDto);
+            if (!validation.isOk()) {
                 System.out.println("ERROR: case is invalid:");
-                for (ValidationError error : result.errors()) {
+                for (ValidationError error : validation.errors()) {
                     System.out.println("- " + error.path() + ": " + error.message());
                 }
                 System.exit(2);
@@ -41,6 +45,9 @@ public class RunCommand implements Runnable {
 
             CaseResolver resolver = new CaseResolver();
             SimulationCase simulationCase = resolver.resolve(caseDto);
+
+            CaseSolver solver = new CaseSolver(new IdentityStepCalculator(), new DirectCaseContext());
+            CaseResult result = solver.calculate(simulationCase);
 
             OutputWriter writer = new OutputWriter();
             writer.writeSummary(outDir, simulationCase, "NOT_IMPLEMENTED_YET");

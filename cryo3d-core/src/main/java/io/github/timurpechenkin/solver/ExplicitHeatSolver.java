@@ -26,7 +26,7 @@ import io.github.timurpechenkin.solver.bc.DirichletApplier;
  * Boundary conditions:
  * Only FIRST_KIND (Dirichlet) is supported for now (clamped after step).
  */
-public final class ExplicitHeatSolver implements HeatSolver {
+public final class ExplicitHeatSolver {
 
     private final int dtSeconds;
     private final DirichletApplier dirichlet = new DirichletApplier();
@@ -38,7 +38,6 @@ public final class ExplicitHeatSolver implements HeatSolver {
         this.dtSeconds = dtSeconds;
     }
 
-    @Override
     public TemperatureField advanceOneStep(SimulationCase c, long tSeconds, TemperatureField current) {
         Objects.requireNonNull(c, "c");
         Objects.requireNonNull(current, "current");
