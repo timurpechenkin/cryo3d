@@ -28,7 +28,7 @@ public final class SummaryCalculator {
     private SummaryCalculator() {
     }
 
-    public static Summary calculate(SimulationCase c, String status) {
+    public static Summary calculate(SimulationCase c) {
         GridStats gridStats = gridStats(c.grid());
         MaterialStats materialStats = materialStats(c.materialField(), c.materialLibrary());
         TemperatureStats temperatureStats = temperatureStats(c.temperatureField());
@@ -37,7 +37,6 @@ public final class SummaryCalculator {
         Summary summary = new Summary(
                 c.caseName(),
                 Instant.now(),
-                status,
                 c.time(),
                 gridStats, materialStats,
                 temperatureStats,

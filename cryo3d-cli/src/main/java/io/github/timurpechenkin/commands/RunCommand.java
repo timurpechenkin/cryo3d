@@ -1,6 +1,8 @@
 package io.github.timurpechenkin.commands;
 
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import io.github.timurpechenkin.casefile.CaseLoader;
 import io.github.timurpechenkin.casefile.CaseResolver;
@@ -11,6 +13,7 @@ import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.output.OutputWriter;
 import io.github.timurpechenkin.solver.CaseSolver;
+import io.github.timurpechenkin.solver.DefaultCaseSolver;
 import io.github.timurpechenkin.solver.calculator.IdentityStepCalculator;
 import io.github.timurpechenkin.solver.context.DirectCaseContextFactory;
 import io.github.timurpechenkin.solver.result.CaseResult;
@@ -25,6 +28,8 @@ public class RunCommand implements Runnable {
 
     @Option(names = { "-o", "--out" }, required = true, description = "Output directory")
     private Path outDir;
+
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     @Override
     public void run() {
@@ -47,13 +52,15 @@ public class RunCommand implements Runnable {
             SimulationCase simulationCase = resolver.resolve(caseDto);
 
             OutputWriter writer = new OutputWriter(outDir);
-            writer.writeSummary(simulationCase, "NOT_IMPLEMENTED_YET");
+            String caseName = simulationCase.caseName() + "_" + formatter.format(LocalDateTime.now());
+
+            writer.writeSummary(simulationCase, caseName);
             System.out.println("OK: wrote " + outDir.resolve("summary.json"));
 
-            CaseSolver solver = new CaseSolver(new IdentityStepCalculator(), new DirectCaseContextFactory());
-            CaseResult result = solver.calculate(simulationCase);
+            CaseSolver solver = new DefaultCaseSolver(new IdentityStepCalculator(), new DirectCaseContextFactory());
+            CaseResult result = solver.solve(simulationCase);
 
-            writer.writeResult(result);
+            writer.writeResult(result, caseName);
             System.out.println("OK: wrote result for " + simulationCase.caseName());
 
         } catch (Exception ex) {

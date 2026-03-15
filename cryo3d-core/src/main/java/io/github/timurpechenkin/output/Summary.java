@@ -10,7 +10,6 @@ import io.github.timurpechenkin.geometry.Face;
 public record Summary(
                 String caseName,
                 Instant startedAtUtc,
-                String status,
                 TimeSettings time,
                 GridStats virtualGrid,
                 MaterialStats materialStats,

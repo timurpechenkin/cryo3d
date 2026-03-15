@@ -34,11 +34,11 @@ public class OutputWriter {
                 .build();
     }
 
-    public void writeSummary(SimulationCase c, String status) throws IOException {
-        Path startDir = outDir.resolve("start");
+    public void writeSummary(SimulationCase c, String caseName) throws IOException {
+        Path startDir = outDir.resolve(caseName).resolve("start");
         Files.createDirectories(startDir);
 
-        Summary summary = SummaryCalculator.calculate(c, status);
+        Summary summary = SummaryCalculator.calculate(c);
 
         Path file = startDir.resolve("summary.json");
         jsonMapper.writeValue(file.toFile(), summary);
@@ -54,8 +54,8 @@ public class OutputWriter {
         }
     }
 
-    public void writeResult(CaseResult result) throws IOException {
-        Path resultDir = outDir.resolve("result");
+    public void writeResult(CaseResult result, String caseName) throws IOException {
+        Path resultDir = outDir.resolve(caseName).resolve("result");
 
         // Запись данных температур по профилям в csv
         Path profileDir = resultDir.resolve("profiles");
