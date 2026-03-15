@@ -29,7 +29,5 @@ public interface StepCalculator {
      */
     void calculateStep(
             CaseContext context,
-            double[] currentTemperatureCByCell,
-            double[] nextTemperatureCByCell,
             long dtSeconds);
 }

@@ -2,8 +2,8 @@ caseName: "demo-freezing"
 
 time:
     dtSeconds: 3600 # шаг расчёта (сек)
-    saveEverySeconds: 21600 # шаг сохранения (сек)
-    totalSeconds: 604800 # длительность расчёта (сек) - неделя
+    saveEverySeconds: 18000 # шаг сохранения (сек)
+    totalSeconds: 180000 # длительность расчёта (сек) - неделя
 
 grid:
     axes:

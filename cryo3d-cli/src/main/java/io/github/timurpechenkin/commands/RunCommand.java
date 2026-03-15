@@ -12,7 +12,7 @@ import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.output.OutputWriter;
 import io.github.timurpechenkin.solver.CaseSolver;
 import io.github.timurpechenkin.solver.calculator.IdentityStepCalculator;
-import io.github.timurpechenkin.solver.context.DirectCaseContext;
+import io.github.timurpechenkin.solver.context.DirectCaseContextFactory;
 import io.github.timurpechenkin.solver.result.CaseResult;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -46,13 +46,15 @@ public class RunCommand implements Runnable {
             CaseResolver resolver = new CaseResolver();
             SimulationCase simulationCase = resolver.resolve(caseDto);
 
-            CaseSolver solver = new CaseSolver(new IdentityStepCalculator(), new DirectCaseContext());
+            OutputWriter writer = new OutputWriter(outDir);
+            writer.writeSummary(simulationCase, "NOT_IMPLEMENTED_YET");
+            System.out.println("OK: wrote " + outDir.resolve("summary.json"));
+
+            CaseSolver solver = new CaseSolver(new IdentityStepCalculator(), new DirectCaseContextFactory());
             CaseResult result = solver.calculate(simulationCase);
 
-            OutputWriter writer = new OutputWriter();
-            writer.writeSummary(outDir, simulationCase, "NOT_IMPLEMENTED_YET");
-
-            System.out.println("OK: wrote " + outDir.resolve("summary.json"));
+            writer.writeResult(result);
+            System.out.println("OK: wrote result for " + simulationCase.caseName());
 
         } catch (Exception ex) {
             System.out.println("ERROR: " + ex.getMessage());

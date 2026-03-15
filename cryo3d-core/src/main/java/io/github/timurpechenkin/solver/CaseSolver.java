@@ -6,6 +6,7 @@ import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.domain.time.TimeSettings;
 import io.github.timurpechenkin.solver.calculator.StepCalculator;
 import io.github.timurpechenkin.solver.context.CaseContext;
+import io.github.timurpechenkin.solver.context.CaseContextFactory;
 import io.github.timurpechenkin.solver.result.CaseResult;
 import io.github.timurpechenkin.solver.result.CaseResultAccumulator;
 
@@ -29,24 +30,23 @@ import io.github.timurpechenkin.solver.result.CaseResultAccumulator;
 public final class CaseSolver {
 
     private final StepCalculator calculator;
-    private final CaseContext context;
+    private final CaseContextFactory contextFactory;
 
-    public CaseSolver(StepCalculator calculator, CaseContext context) {
+    public CaseSolver(StepCalculator calculator, CaseContextFactory contextFactory) {
         this.calculator = Objects.requireNonNull(calculator, "calculator");
-        this.context = Objects.requireNonNull(context, "context");
+        this.contextFactory = Objects.requireNonNull(contextFactory, "contextFactory");
     }
 
     public CaseResult calculate(SimulationCase simulationCase) {
         Objects.requireNonNull(simulationCase, "simulationCase");
 
-        context.createFrom(simulationCase);
+        CaseContext context = contextFactory.create(simulationCase);
         TimeSettings time = simulationCase.time();
 
         long cellCountLong = context.grid().cellCount();
         if (cellCountLong > Integer.MAX_VALUE) {
             throw new IllegalStateException("Grid is too large for int[]/double[] solver arrays: " + cellCountLong);
         }
-        int cellCount = (int) cellCountLong;
 
         if (time.dtSeconds() <= 0) {
             throw new IllegalArgumentException("TimeSettings.dtSeconds must be > 0");
@@ -70,40 +70,23 @@ public final class CaseSolver {
             throw new IllegalArgumentException("save steps must be > 0 and < Integer.MAX_VALUE");
         }
         int saveStep = (int) saveStepLong;
-
         int savedSteps = steps / saveStep + 1;
 
-        double[] currentTemperatureCByCell = new double[cellCount];
-        double[] nextTemperatureCByCell = new double[cellCount];
-
-        for (int i = 0; i < cellCount; i++) {
-            currentTemperatureCByCell[i] = context.temperatureC(i);
-        }
-
         CaseResultAccumulator accumulator = new CaseResultAccumulator(simulationCase, savedSteps);
-
-        accumulator.recordStep(0, 0, currentTemperatureCByCell);
+        accumulator.recordStep(0, 0, context.currentTemperatureByCell());
 
         long dtSeconds = time.dtSeconds();
         int saveIndex = 1;
 
         for (int step = 1; step <= steps; step++) {
-            double currentTimeSeconds = (double) step * dtSeconds;
+            long currentTimeSeconds = step * dtSeconds;
 
-            calculator.calculateStep(
-                    context,
-                    currentTemperatureCByCell,
-                    nextTemperatureCByCell,
-                    dtSeconds);
+            calculator.calculateStep(context, dtSeconds);
 
             if (isSaveStep(step, saveStep)) {
-                accumulator.recordStep(saveIndex, currentTimeSeconds, nextTemperatureCByCell);
+                accumulator.recordStep(saveIndex, currentTimeSeconds, context.currentTemperatureByCell());
                 saveIndex++;
             }
-
-            double[] tmp = currentTemperatureCByCell;
-            currentTemperatureCByCell = nextTemperatureCByCell;
-            nextTemperatureCByCell = tmp;
         }
 
         return accumulator.build();

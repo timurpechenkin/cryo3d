@@ -175,8 +175,6 @@ public class ProfileDiscretizer {
 
             // Если дошли до конца отрезка — выходим
             if (tNext >= 1.0 || wEdge >= lengthScaled) {
-                System.out.println("tNext = " + tNext);
-                System.out.println("wEdge = " + wEdge);
                 break;
             }
 
@@ -190,13 +188,6 @@ public class ProfileDiscretizer {
                 py += stepY;
 
             t = tNext;
-
-            // // Если дошли до конечной ячейки и т уже близко к 1 — завершаем
-            // if (px == pxEnd && py == pyEnd) {
-            // System.out.println("px = " + px + ", pxEnd = " + pxEnd + ", py = " + py + ",
-            // pyEnd = " + pyEnd);
-            // break;
-            // }
         }
 
         // Заменяем последний edge и cell ровно до lengthScaled (если вдруг из-за
@@ -215,9 +206,6 @@ public class ProfileDiscretizer {
         // Приводим к массивам
         int[] edgesArr = edgesW.stream().mapToInt(Integer::intValue).toArray();
         CellXY[] cellsArr = cells.toArray(CellXY[]::new);
-
-        System.out.println("edges: " + Arrays.toString(edgesArr));
-        System.out.println("cells: " + Arrays.toString(cellsArr));
 
         // Инвариант: edges = cells + 1
         if (edgesArr.length != cellsArr.length + 1) {

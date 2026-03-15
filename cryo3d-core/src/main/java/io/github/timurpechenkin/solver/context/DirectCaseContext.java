@@ -42,12 +42,14 @@ import io.github.timurpechenkin.domain.temperature.TemperatureField;
  */
 public class DirectCaseContext implements CaseContext {
 
+    private int cellCount;
+
     private Grid3D grid;
 
     /** Индекс материала по ячейке. */
     private int[] materialIdByCell;
 
-    /** Температура по ячейке, °C. */
+    /** Текущая температура по ячейке, °C. */
     private double[] temperatureCByCell;
 
     /** Кеш теплопроводности талого грунта по ячейке. */
@@ -78,220 +80,7 @@ public class DirectCaseContext implements CaseContext {
      * @throws IllegalStateException если размеры массивов полей не совпадают с
      *                               размером сетки
      */
-    public DirectCaseContext() {
-
-    }
-
-    /**
-     * Возвращает сетку задачи.
-     *
-     * <p>
-     * Может использоваться солвером для доступа к геометрии:
-     * шагам, центрам, объёмам ячеек и т.п.
-     *
-     * @return 3D-сетка задачи
-     */
-    public Grid3D grid() {
-        return grid;
-    }
-
-    /**
-     * Возвращает линейный индекс ячейки по позиции {@code (x,y,z)}.
-     *
-     * @param x позиция по оси X
-     * @param y позиция по оси Y
-     * @param z позиция по оси Z
-     * @return линейный индекс ячейки
-     * @throws IndexOutOfBoundsException если позиция выходит за пределы сетки
-     */
-    public int idx(int x, int y, int z) {
-        return grid.index(x, y, z);
-    }
-
-    // -------------------------------------------------------------------------
-    // Материал
-    // -------------------------------------------------------------------------
-
-    /**
-     * Возвращает идентификатор материала для ячейки.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return индекс материала в библиотеке материалов
-     */
-    public int materialId(int x, int y, int z) {
-        return materialIdByCell[idx(x, y, z)];
-    }
-
-    /**
-     * Возвращает теплопроводность талого грунта.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return теплопроводность талого состояния
-     */
-    public double thermalConductivityThawed(int x, int y, int z) {
-        return thermalConductivityThawedByCell[idx(x, y, z)];
-    }
-
-    /**
-     * Возвращает теплопроводность мерзлого грунта.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return теплопроводность мерзлого состояния
-     */
-    public double thermalConductivityFrozen(int x, int y, int z) {
-        return thermalConductivityFrozenByCell[idx(x, y, z)];
-    }
-
-    /**
-     * Возвращает теплоёмкость талого грунта.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return теплоёмкость талого состояния
-     */
-    public double heatCapacityThawed(int x, int y, int z) {
-        return heatCapacityThawedByCell[idx(x, y, z)];
-    }
-
-    /**
-     * Возвращает теплоёмкость мерзлого грунта.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return теплоёмкость мерзлого состояния
-     */
-    public double heatCapacityFrozen(int x, int y, int z) {
-        return heatCapacityFrozenByCell[idx(x, y, z)];
-    }
-
-    /**
-     * Возвращает скрытую теплоту фазового перехода.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return скрытая теплота фазового перехода
-     */
-    public double phaseTransitionsHeat(int x, int y, int z) {
-        return phaseTransitionsHeatByCell[idx(x, y, z)];
-    }
-
-    /**
-     * Возвращает температуру замерзания материала.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return температура замерзания
-     */
-    public double freezingTemperature(int x, int y, int z) {
-        return freezingTemperatureByCell[idx(x, y, z)];
-    }
-
-    // -------------------------------------------------------------------------
-    // Температура
-    // -------------------------------------------------------------------------
-
-    /**
-     * Возвращает температуру ячейки в градусах Цельсия.
-     *
-     * @param x позиция по X
-     * @param y позиция по Y
-     * @param z позиция по Z
-     * @return температура ячейки, °C
-     */
-    public double temperatureC(int x, int y, int z) {
-        return temperatureCByCell[idx(x, y, z)];
-    }
-
-    // -------------------------------------------------------------------------
-    // Быстрый доступ по линейному индексу
-    // -------------------------------------------------------------------------
-
-    /**
-     * Возвращает теплопроводность талого состояния по линейному индексу.
-     *
-     * <p>
-     * Удобно использовать внутри плотных расчётных циклов,
-     * если индекс уже вычислен заранее.
-     *
-     * @param cellIndex линейный индекс ячейки
-     * @return теплопроводность талого состояния
-     */
-    public double thermalConductivityThawed(int cellIndex) {
-        return thermalConductivityThawedByCell[cellIndex];
-    }
-
-    /**
-     * Возвращает теплопроводность мерзлого состояния по линейному индексу.
-     *
-     * @param cellIndex линейный индекс ячейки
-     * @return теплопроводность мерзлого состояния
-     */
-    public double thermalConductivityFrozen(int cellIndex) {
-        return thermalConductivityFrozenByCell[cellIndex];
-    }
-
-    /**
-     * Возвращает теплоёмкость талого состояния по линейному индексу.
-     *
-     * @param cellIndex линейный индекс ячейки
-     * @return теплоёмкость талого состояния
-     */
-    public double heatCapacityThawed(int cellIndex) {
-        return heatCapacityThawedByCell[cellIndex];
-    }
-
-    /**
-     * Возвращает теплоёмкость мерзлого состояния по линейному индексу.
-     *
-     * @param cellIndex линейный индекс ячейки
-     * @return теплоёмкость мерзлого состояния
-     */
-    public double heatCapacityFrozen(int cellIndex) {
-        return heatCapacityFrozenByCell[cellIndex];
-    }
-
-    /**
-     * Возвращает скрытую теплоту фазового перехода по линейному индексу.
-     *
-     * @param cellIndex линейный индекс ячейки
-     * @return скрытая теплота фазового перехода
-     */
-    public double phaseTransitionsHeat(int cellIndex) {
-        return phaseTransitionsHeatByCell[cellIndex];
-    }
-
-    /**
-     * Возвращает температуру замерзания по линейному индексу.
-     *
-     * @param cellIndex линейный индекс ячейки
-     * @return температура замерзания
-     */
-    public double freezingTemperature(int cellIndex) {
-        return freezingTemperatureByCell[cellIndex];
-    }
-
-    /**
-     * Возвращает температуру по линейному индексу.
-     *
-     * @param cellIndex линейный индекс ячейки
-     * @return температура, °C
-     */
-    public double temperatureC(int cellIndex) {
-        return temperatureCByCell[cellIndex];
-    }
-
-    @Override
-    public void createFrom(SimulationCase c) {
+    public DirectCaseContext(SimulationCase c) {
         Objects.requireNonNull(c, "simulation case");
 
         this.grid = Objects.requireNonNull(c.grid(), "grid");
@@ -308,7 +97,7 @@ public class DirectCaseContext implements CaseContext {
             throw new IllegalStateException(
                     "Grid is too large for int[]-based solver arrays: cellCount=" + cellCountLong);
         }
-        int cellCount = (int) cellCountLong;
+        this.cellCount = (int) cellCountLong;
 
         if (materialIdByCell.length != cellCount) {
             throw new IllegalStateException(
@@ -338,6 +127,135 @@ public class DirectCaseContext implements CaseContext {
             heatCapacityFrozenByCell[i] = material.heatCapacityFrozen();
             phaseTransitionsHeatByCell[i] = material.phaseTransitionsHeat();
             freezingTemperatureByCell[i] = material.freezingTemperature();
+        }
+    }
+
+    @Override
+    public Grid3D grid() {
+        return grid;
+    }
+
+    @Override
+    public int idx(int x, int y, int z) {
+        return grid.index(x, y, z);
+    }
+
+    // -------------------------------------------------------------------------
+    // Материал
+    // -------------------------------------------------------------------------
+
+    @Override
+    public int materialId(int x, int y, int z) {
+        return materialIdByCell[idx(x, y, z)];
+    }
+
+    @Override
+    public double thermalConductivity(int x, int y, int z) {
+        int idx = idx(x, y, z);
+        if (isFrozen(idx)) {
+            return thermalConductivityFrozenByCell[idx];
+        } else {
+            return thermalConductivityThawedByCell[idx];
+        }
+    }
+
+    @Override
+    public double heatCapacity(int x, int y, int z) {
+        int idx = idx(x, y, z);
+        if (isFrozen(idx)) {
+            return thermalConductivityFrozenByCell[idx];
+        } else {
+            return thermalConductivityThawedByCell[idx];
+        }
+    }
+
+    @Override
+    public double phaseTransitionsHeat(int x, int y, int z) {
+        return phaseTransitionsHeatByCell[idx(x, y, z)];
+    }
+
+    @Override
+    public double freezingTemperature(int x, int y, int z) {
+        return freezingTemperatureByCell[idx(x, y, z)];
+    }
+
+    // -------------------------------------------------------------------------
+    // Температура
+    // -------------------------------------------------------------------------
+
+    /**
+     * Возвращает температуру ячейки в градусах Цельсия.
+     *
+     * @param x позиция по X
+     * @param y позиция по Y
+     * @param z позиция по Z
+     * @return температура ячейки, °C
+     */
+    @Override
+    public double temperatureC(int x, int y, int z) {
+        return temperatureCByCell[idx(x, y, z)];
+    }
+
+    @Override
+    public void setNewTemperature(double[] newTemperature) {
+        Objects.requireNonNull(newTemperature, "newTemperature");
+        if (newTemperature.length != cellCount) {
+            throw new IllegalStateException(
+                    "newTemperature length mismatch: expected " + cellCount + ", actual "
+                            + newTemperature.length);
+        }
+        this.temperatureCByCell = newTemperature;
+    }
+
+    @Override
+    public double[] currentTemperatureByCell() {
+        return temperatureCByCell;
+    }
+
+    // -------------------------------------------------------------------------
+    // Быстрый доступ по линейному индексу
+    // -------------------------------------------------------------------------
+
+    @Override
+    public double thermalConductivity(int idx) {
+        if (isFrozen(idx)) {
+            return thermalConductivityFrozenByCell[idx];
+        } else {
+            return thermalConductivityThawedByCell[idx];
+        }
+    }
+
+    @Override
+    public double heatCapacity(int idx) {
+        if (isFrozen(idx)) {
+            return heatCapacityFrozenByCell[idx];
+        } else {
+            return heatCapacityThawedByCell[idx];
+        }
+    }
+
+    @Override
+    public double phaseTransitionsHeat(int cellIndex) {
+        return phaseTransitionsHeatByCell[cellIndex];
+    }
+
+    @Override
+    public double freezingTemperature(int cellIndex) {
+        return freezingTemperatureByCell[cellIndex];
+    }
+
+    @Override
+    public double temperatureC(int cellIndex) {
+        return temperatureCByCell[cellIndex];
+    }
+
+    private boolean isFrozen(int idx) {
+        double t = temperatureC(idx);
+        double tFreezing = freezingTemperature(idx);
+        if (t > tFreezing) {
+            return false;
+        } else {
+            return true;
         }
     }
 }

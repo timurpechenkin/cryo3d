@@ -27,6 +27,6 @@ import io.github.timurpechenkin.domain.measurement.Profile;
  * @param temperatureCByStep история температур профиля по шагам, °C
  */
 public record ProfileSeries(
-        Profile profile,
-        double[][] temperatureCByStep) {
+                Profile profile,
+                TemperatureFrame2D[] temperatureFrames) {
 }

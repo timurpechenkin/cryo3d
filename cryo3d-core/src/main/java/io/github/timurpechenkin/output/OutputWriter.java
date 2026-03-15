@@ -11,13 +11,21 @@ import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.measurement.Profile;
+import io.github.timurpechenkin.domain.measurement.SamplePoint;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
+import io.github.timurpechenkin.solver.result.CaseResult;
+import io.github.timurpechenkin.solver.result.ProfileSeries;
+import io.github.timurpechenkin.solver.result.SamplePointSeries;
+import io.github.timurpechenkin.solver.result.TemperatureFrame2D;
 
 public class OutputWriter {
+    private final Path outDir;
     private final ObjectMapper jsonMapper;
     private final ProfileCsvWriter profileCsvWriter = new ProfileCsvWriter();
+    private final PointCsvWriter pointCsvWriter = new PointCsvWriter();
 
-    public OutputWriter() {
+    public OutputWriter(Path outDir) {
+        this.outDir = outDir;
         this.jsonMapper = JsonMapper.builder()
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 // to allow serialization of "empty" POJOs (no properties to serialize)
@@ -26,20 +34,49 @@ public class OutputWriter {
                 .build();
     }
 
-    public void writeSummary(Path outDir, SimulationCase c, String status) throws IOException {
-        Files.createDirectories(outDir);
+    public void writeSummary(SimulationCase c, String status) throws IOException {
+        Path startDir = outDir.resolve("start");
+        Files.createDirectories(startDir);
 
         Summary summary = SummaryCalculator.calculate(c, status);
 
-        Path file = outDir.resolve("summary.json");
+        Path file = startDir.resolve("summary.json");
         jsonMapper.writeValue(file.toFile(), summary);
 
         TemperatureField temperatureField = c.temperatureField();
         MaterialField materialField = c.materialField();
         MaterialLibrary materialLibrary = c.materialLibrary();
         for (Profile profile : c.profiles()) {
-            profileCsvWriter.writeMaterialGridCsv(outDir, profile, materialField, materialLibrary);
-            profileCsvWriter.writeTemperatureGridCsv(outDir, profile, temperatureField);
+            profileCsvWriter.writeMaterialGridCsv(startDir, profile, materialField.materialIndexByCell(),
+                    materialLibrary, profile.name() + "_material_0");
+            profileCsvWriter.writeTemperatureGridCsv(startDir, profile, temperatureField.temperatureCByCell(),
+                    profile.name() + "_temperature_0");
         }
+    }
+
+    public void writeResult(CaseResult result) throws IOException {
+        Path resultDir = outDir.resolve("result");
+
+        // Запись данных температур по профилям в csv
+        Path profileDir = resultDir.resolve("profiles");
+        for (ProfileSeries profileSeries : result.profileSeries()) {
+            Profile profile = profileSeries.profile();
+            Path specialProfileDir = profileDir.resolve(profile.name());
+            for (TemperatureFrame2D temperatureFrames : profileSeries.temperatureFrames()) {
+                double[] temperatureCByCell = temperatureFrames.temperatureCByCell();
+                long seconds = temperatureFrames.seconds();
+                profileCsvWriter.writeTemperatureProfileCsv(specialProfileDir, profile, temperatureCByCell,
+                        profile.name() + "_temperature_" + seconds);
+            }
+        }
+
+        // Запись данных температур по точкам в csv
+        Path pointDir = resultDir.resolve("points");
+        for (SamplePointSeries samplePointSeries : result.pointSeries()) {
+            SamplePoint samplePoint = samplePointSeries.samplePoint();
+            pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePoint, samplePointSeries.temperatureFrames(),
+                    samplePoint.name() + "_temperature");
+        }
+
     }
 }

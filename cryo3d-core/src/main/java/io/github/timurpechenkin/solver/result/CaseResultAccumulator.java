@@ -36,8 +36,8 @@ public final class CaseResultAccumulator {
     private final List<Profile> profiles;
 
     private final double[] timeSeconds;
-    private final double[][] pointTemperatureByPointAndStep;
-    private final double[][][] profileTemperatureByProfileAndStepAndCell;
+    private final TemperatureFrame1D[][] pointTemperatureFrames;
+    private final TemperatureFrame2D[][] profileTemperatureFrames;
 
     private final int totalSteps;
     private int recordedSteps;
@@ -64,14 +64,8 @@ public final class CaseResultAccumulator {
 
         this.timeSeconds = new double[totalSteps];
 
-        this.pointTemperatureByPointAndStep = new double[samplePoints.size()][totalSteps];
-
-        this.profileTemperatureByProfileAndStepAndCell = new double[profiles.size()][][];
-        for (int p = 0; p < profiles.size(); p++) {
-            Profile profile = profiles.get(p);
-            int profileCellCount = profile.cellIndex().length;
-            this.profileTemperatureByProfileAndStepAndCell[p] = new double[totalSteps][profileCellCount];
-        }
+        this.pointTemperatureFrames = new TemperatureFrame1D[samplePoints.size()][totalSteps];
+        this.profileTemperatureFrames = new TemperatureFrame2D[profiles.size()][totalSteps];
     }
 
     /**
@@ -91,7 +85,7 @@ public final class CaseResultAccumulator {
      * @throws IndexOutOfBoundsException если {@code step} вне диапазона
      * @throws IllegalArgumentException  если поле температур равно null
      */
-    public void recordStep(int step, double timeSeconds, double[] temperatureCByCell) {
+    public void recordStep(int step, long timeSeconds, double[] temperatureCByCell) {
         if (step < 0 || step >= totalSteps) {
             throw new IndexOutOfBoundsException("Step out of range: " + step);
         }
@@ -103,18 +97,21 @@ public final class CaseResultAccumulator {
         for (int p = 0; p < samplePoints.size(); p++) {
             SamplePoint point = samplePoints.get(p);
             int cellIndex = point.cellIndex();
-            pointTemperatureByPointAndStep[p][step] = temperatureCByCell[cellIndex];
+            double temperature = temperatureCByCell[cellIndex];
+            pointTemperatureFrames[p][step] = new TemperatureFrame1D(temperature, timeSeconds);
         }
 
         // Профили
         for (int p = 0; p < profiles.size(); p++) {
             Profile profile = profiles.get(p);
             int[] profileCellIndex = profile.cellIndex();
-            double[] profileState = profileTemperatureByProfileAndStepAndCell[p][step];
+            double[] profileState = new double[profileCellIndex.length];
 
             for (int i = 0; i < profileCellIndex.length; i++) {
                 profileState[i] = temperatureCByCell[profileCellIndex[i]];
             }
+
+            profileTemperatureFrames[p][step] = new TemperatureFrame2D(profileState, timeSeconds);
         }
 
         if (step + 1 > recordedSteps) {
@@ -149,16 +146,18 @@ public final class CaseResultAccumulator {
     public CaseResult build() {
         List<SamplePointSeries> pointSeries = new ArrayList<>(samplePoints.size());
         for (int p = 0; p < samplePoints.size(); p++) {
+            TemperatureFrame1D[] temperatureFrames = pointTemperatureFrames[p];
             pointSeries.add(new SamplePointSeries(
                     samplePoints.get(p),
-                    pointTemperatureByPointAndStep[p]));
+                    temperatureFrames));
         }
 
         List<ProfileSeries> profileSeries = new ArrayList<>(profiles.size());
         for (int p = 0; p < profiles.size(); p++) {
+            TemperatureFrame2D[] temperatureFrame2Ds = profileTemperatureFrames[p];
             profileSeries.add(new ProfileSeries(
                     profiles.get(p),
-                    profileTemperatureByProfileAndStepAndCell[p]));
+                    temperatureFrame2Ds));
         }
 
         return new CaseResult(
