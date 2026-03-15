@@ -3,7 +3,6 @@ package io.github.timurpechenkin.casefile.resolve;
 import static io.github.timurpechenkin.geometry.GeometryScale.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 
