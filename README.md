@@ -129,12 +129,24 @@ grid:
 # 🗂 4. Структура результатов
 
     results/
-    ├── profiles/
-    │   ├── profile_line-x_materials.csv
-    │   ├── profile_line-x_temperature0.csv
-    │   ├── profile_line-y_materials.csv
-    │   └── profile_line-y_temperature0.csv
-    └── summary.json
+      ├── result
+      │   ├── points
+      │   │   └── center_temperature.csv
+      │   └── profiles
+      │       ├── line-x
+      │       │   ├── line-x_temperature_0.csv
+      │       │   ├── line-x_temperature_108000.csv
+      │       │   ├── line-x_temperature_126000.csv
+      │       └── line-y
+      │           ├── line-y_temperature_0.csv
+      │           ├── line-y_temperature_108000.csv
+      │           └── line-y_temperature_126000.csv
+      └── start
+          ├── line-x_material_0.csv
+          ├── line-x_temperature_0.csv
+          ├── line-y_material_0.csv
+          ├── line-y_temperature_0.csv
+          └── summary.json
 
 ------------------------------------------------------------------------
 
@@ -152,13 +164,12 @@ grid:
 
 # 🏗 6. Архитектура
 
-DTO → Resolver → Domain → Discretizer → Fields → Output
+SimulationCaseDto → CaseValidator → CaseResolver → SimulationCase → CaseSolver → CaseResult → OutputWriter
 
 ------------------------------------------------------------------------
 
 # ⚠ Ограничения
 
--   Только VirtualGrid
 -   Только CONSTANT температура
 -   Нет двумерных BC правил
 -   Нет DXF-импорта
