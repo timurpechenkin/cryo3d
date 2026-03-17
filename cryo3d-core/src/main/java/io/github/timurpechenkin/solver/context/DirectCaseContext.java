@@ -10,35 +10,29 @@ import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 
 /**
- * Solver-ориентированное представление {@link SimulationCase}.
+ * Базовая реализация {@link CaseContext}, создающая начальное runtime-состояние
+ * расчёта напрямую из {@link SimulationCase}.
  *
  * <p>
- * Этот класс скрывает внутреннюю структуру доменной модели
- * (Grid, Field, Library) и предоставляет солверу простой API,
- * позволяющий получать параметры ячейки напрямую по её позиции
- * {@code (x, y, z)}.
- *
- * <p>
- * В отличие от "ленивого" доступа через библиотеку материалов,
- * данный класс при создании один раз строит кеш массивов параметров
- * по всем ячейкам. Благодаря этому в расчётных циклах солвер работает
- * только с примитивными массивами {@code double[]} и не выполняет
- * повторных обращений к {@link MaterialLibrary}.
- *
- * <p>
- * Основные преимущества:
+ * Контекст хранит:
  * <ul>
- * <li>отсутствие повторных вызовов {@code getByIndex()}</li>
- * <li>отсутствие повторного доступа к объектам {@link Material}</li>
- * <li>более быстрый и компактный код в горячих циклах солвера</li>
+ * <li>расчётную сетку;</li>
+ * <li>текущее температурное поле;</li>
+ * <li>кеш параметров материалов по всем ячейкам;</li>
+ * <li>логику вычисления эффективных теплофизических свойств
+ * при текущей температуре.</li>
  * </ul>
  *
  * <p>
- * Класс является только представлением (view) и не изменяет данные задачи.
+ * В данной реализации теплопроводность и теплоёмкость
+ * выбираются по бинарной схеме:
+ * ячейка считается талой или мёрзлой в зависимости от сравнения
+ * текущей температуры с температурой замерзания материала.
  *
  * <p>
- * Потокобезопасность: потокобезопасен, если исходные структуры данных
- * {@link SimulationCase} неизменяемы.
+ * Контекст является изменяемым и не потокобезопасен.
+ * Он предназначен для использования одним солвером
+ * в рамках одного расчёта.
  */
 public class DirectCaseContext implements CaseContext {
 
@@ -71,14 +65,19 @@ public class DirectCaseContext implements CaseContext {
     private double[] freezingTemperatureByCell;
 
     /**
-     * Создаёт solver-ориентированное представление задачи
-     * и подготавливает кеш параметров по всем ячейкам.
+     * Создаёт начальное runtime-состояние расчёта
+     * на основе расчётного случая.
      *
-     * @param c задача моделирования
-     * @throws NullPointerException  если один из обязательных элементов задачи
-     *                               равен null
-     * @throws IllegalStateException если размеры массивов полей не совпадают с
-     *                               размером сетки
+     * <p>
+     * Конструктор подготавливает кеш параметров материалов
+     * по всем ячейкам, чтобы сократить число обращений к библиотеке
+     * материалов в горячих циклах солвера.
+     *
+     * @param c расчётный случай
+     * @throws NullPointerException  если один из обязательных элементов
+     *                               расчётного случая равен {@code null}
+     * @throws IllegalStateException если размеры полей не совпадают
+     *                               с размером расчётной сетки
      */
     public DirectCaseContext(SimulationCase c) {
         Objects.requireNonNull(c, "simulation case");
@@ -163,9 +162,9 @@ public class DirectCaseContext implements CaseContext {
     public double heatCapacity(int x, int y, int z) {
         int idx = idx(x, y, z);
         if (isFrozen(idx)) {
-            return thermalConductivityFrozenByCell[idx];
+            return heatCapacityFrozenByCell[idx];
         } else {
-            return thermalConductivityThawedByCell[idx];
+            return heatCapacityThawedByCell[idx];
         }
     }
 
@@ -196,6 +195,19 @@ public class DirectCaseContext implements CaseContext {
         return temperatureCByCell[idx(x, y, z)];
     }
 
+    /**
+     * Заменяет текущее температурное поле новым состоянием.
+     *
+     * <p>
+     * После вызова этого метода все зависящие от температуры
+     * эффективные свойства ячеек будут вычисляться уже
+     * по новому температурному полю.
+     *
+     * @param newTemperature новое температурное поле, °C
+     * @throws NullPointerException  если {@code newTemperature == null}
+     * @throws IllegalStateException если длина массива не совпадает
+     *                               с числом ячеек расчётной сетки
+     */
     @Override
     public void setNewTemperature(double[] newTemperature) {
         Objects.requireNonNull(newTemperature, "newTemperature");
@@ -207,6 +219,16 @@ public class DirectCaseContext implements CaseContext {
         this.temperatureCByCell = newTemperature;
     }
 
+    /**
+     * Возвращает текущее температурное поле.
+     *
+     * <p>
+     * <b>Важно:</b> возвращается внутренняя ссылка на массив.
+     * Это сделано для производительности в численных расчётах.
+     * Изменение массива снаружи напрямую изменяет состояние контекста.
+     *
+     * @return текущее температурное поле, °C
+     */
     @Override
     public double[] currentTemperatureByCell() {
         return temperatureCByCell;
@@ -252,10 +274,6 @@ public class DirectCaseContext implements CaseContext {
     private boolean isFrozen(int idx) {
         double t = temperatureC(idx);
         double tFreezing = freezingTemperature(idx);
-        if (t > tFreezing) {
-            return false;
-        } else {
-            return true;
-        }
+        return t <= tFreezing;
     }
 }
