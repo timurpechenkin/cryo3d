@@ -1,9 +1,10 @@
 caseName: "demo-freezing"
 
 time:
+    startDate: "2000-01-01T00:00:00.000"
+    endDate: "2000-01-07T00:00:00.000"
     dtSeconds: 3600 # шаг расчёта (сек)
-    saveEverySeconds: 18000 # шаг сохранения (сек)
-    totalSeconds: 180000 # длительность расчёта (сек) - неделя
+    saveEverySeconds: 86400 # шаг сохранения (сек)
 
 grid:
     axes:
@@ -24,21 +25,30 @@ boundaryConditions:
     # тип граничного условия (FIRST_KIND, SECOND_KIND, THIRD_KIND)
     # температура на границе (T, [°C])
     # поток тепла на границе (q, [Вт/м2])
-    # коэффициент теплообмена на границе (a, [Вт/(м3*К)])
+    # коэффициент теплообмена на границе (a, [Вт/(м2*К)])
     definitions:
         bc_cold:
             type: FIRST_KIND
-            temperature: -15.0
-        bc_warm:
-            type: FIRST_KIND
-            temperature: 2.0
+            temperature:
+                JANUARY:  -15.0
+                FEBRUARY: -15.0
+                MARCH:    -15.0
+                APRIL:    -15.0
+                MAY:      -15.0
+                JUNE:     -15.0
+                JULY:     -15.0
+                AUGUST:   -15.0
+                SEPTEMBER: -15.0
+                OCTOBER:   -15.0
+                NOVEMBER:  -15.0
+                DECEMBER:  -15.0
     field:
         faces:
             Z_MAX:
                 default: bc_cold
                 rules: []
             Z_MIN:
-                default: bc_warm
+                default: bc_cold
                 rules: []
             X_MAX:
                 default: bc_cold

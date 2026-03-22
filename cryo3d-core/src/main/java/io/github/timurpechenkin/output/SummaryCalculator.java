@@ -55,7 +55,7 @@ public final class SummaryCalculator {
     }
 
     private static MaterialStats materialStats(MaterialField field, MaterialLibrary lib) {
-        int[] matArr = field.materialIndexByCell();
+        int[] matArr = field.materialIdByCell();
         long total = matArr.length;
 
         long[] counts = new long[lib.size()];
@@ -70,7 +70,7 @@ public final class SummaryCalculator {
         Map<String, Long> byName = new LinkedHashMap<>();
         for (int i = 0; i < counts.length; i++) {
             long c = counts[i];
-            Material m = lib.getByIndex(i);
+            Material m = lib.getById(i);
             byName.put(m.name(), c);
         }
 
@@ -133,7 +133,7 @@ public final class SummaryCalculator {
             Map<String, Long> byName = new LinkedHashMap<>();
             for (int i = 0; i < counts.length; i++) {
                 long c = counts[i];
-                BoundaryCondition m = library.getByIndex(i);
+                BoundaryCondition m = library.getById(i);
                 byName.put(m.name(), c);
             }
 

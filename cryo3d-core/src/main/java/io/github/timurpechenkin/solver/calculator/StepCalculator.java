@@ -46,10 +46,12 @@ public interface StepCalculator {
      * <li>записать результат обратно в контекст.</li>
      * </ul>
      *
-     * @param context   текущее runtime-состояние расчёта
-     * @param dtSeconds шаг по времени, сек
+     * @param context     текущее runtime-состояние расчёта
+     * @param dtSeconds   шаг по времени, сек
+     * @param currentTime текущее вермя от даты начала расчётаб сек
      */
     void calculateStep(
             CaseContext context,
-            long dtSeconds);
+            long dtSeconds,
+            long currentTime);
 }

@@ -4,9 +4,9 @@ public interface Library<T> {
 
     int add(String name, T item);
 
-    int indexOf(String name);
+    int idOf(String name);
 
-    T getByIndex(int index);
+    T getById(int index);
 
     T getByName(String name);
 

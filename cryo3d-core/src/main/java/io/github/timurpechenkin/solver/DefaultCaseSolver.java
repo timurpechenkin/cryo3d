@@ -1,5 +1,6 @@
 package io.github.timurpechenkin.solver;
 
+import java.time.Duration;
 import java.util.Objects;
 
 import io.github.timurpechenkin.domain.SimulationCase;
@@ -73,15 +74,12 @@ public final class DefaultCaseSolver implements CaseSolver {
         if (time.dtSeconds() <= 0) {
             throw new IllegalArgumentException("TimeSettings.dtSeconds must be > 0");
         }
-
-        if (time.totalSeconds() % time.dtSeconds() != 0) {
-            throw new IllegalArgumentException("totalSeconds must be a multiple of dtSeconds");
-        }
         if (time.saveEverySeconds() % time.dtSeconds() != 0) {
             throw new IllegalArgumentException("saveEverySeconds must be a multiple of dtSeconds");
         }
 
-        long stepsLong = time.totalSeconds() / time.dtSeconds();
+        long totalSeconds = Duration.between(time.startDate(), time.endDate()).getSeconds();
+        long stepsLong = totalSeconds / time.dtSeconds();
         if (stepsLong <= 0 || stepsLong > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("steps must be > 0 and < Integer.MAX_VALUE");
         }
@@ -103,7 +101,7 @@ public final class DefaultCaseSolver implements CaseSolver {
         for (int step = 1; step <= steps; step++) {
             long currentTimeSeconds = step * dtSeconds;
 
-            calculator.calculateStep(context, dtSeconds);
+            calculator.calculateStep(context, dtSeconds, currentTimeSeconds);
 
             if (isSaveStep(step, saveStep)) {
                 accumulator.recordStep(saveIndex, currentTimeSeconds, context.currentTemperatureByCell());

@@ -87,7 +87,7 @@ public final class CaseResolver {
     }
 
     private TimeSettings resolveTime(TimeSettingsDto t) {
-        return new TimeSettings(t.dtSeconds(), t.saveEverySeconds(), t.totalSeconds());
+        return new TimeSettings(t.startDate(), t.endDate(), t.dtSeconds(), t.saveEverySeconds());
     }
 
     private Grid3D resolveGrid(GridSpecDto g) {
@@ -141,6 +141,7 @@ public final class CaseResolver {
                     d.type(),
                     d.temperature(),
                     d.heatFlow(),
+                    d.ambientTemperature(),
                     d.heatTransferCoefficient());
 
             lib.add(id, bc);

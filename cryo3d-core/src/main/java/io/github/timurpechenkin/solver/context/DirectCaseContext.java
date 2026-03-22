@@ -1,13 +1,21 @@
 package io.github.timurpechenkin.solver.context;
 
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.util.EnumMap;
 import java.util.Objects;
 
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.bc.BoundaryCondition;
+import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
+import io.github.timurpechenkin.domain.bc.BoundaryConditionType;
 import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
+import io.github.timurpechenkin.geometry.Axis3D;
+import io.github.timurpechenkin.geometry.Face;
 
 /**
  * Базовая реализация {@link CaseContext}, создающая начальное runtime-состояние
@@ -20,14 +28,20 @@ import io.github.timurpechenkin.domain.temperature.TemperatureField;
  * <li>текущее температурное поле;</li>
  * <li>кеш параметров материалов по всем ячейкам;</li>
  * <li>логику вычисления эффективных теплофизических свойств
- * при текущей температуре.</li>
+ * при текущей температуре;</li>
+ * <li>текущее модельное время;</li>
+ * <li>доступ к параметрам граничных условий на внешних гранях области.</li>
  * </ul>
  *
  * <p>
- * В данной реализации теплопроводность и теплоёмкость
+ * В данной реализации теплопроводность и объёмная теплоёмкость
  * выбираются по бинарной схеме:
  * ячейка считается талой или мёрзлой в зависимости от сравнения
  * текущей температуры с температурой замерзания материала.
+ *
+ * <p>
+ * Параметры граничных условий могут зависеть от месяца года.
+ * Контекст возвращает значения, соответствующие текущему времени контекста.
  *
  * <p>
  * Контекст является изменяемым и не потокобезопасен.
@@ -36,11 +50,15 @@ import io.github.timurpechenkin.domain.temperature.TemperatureField;
  */
 public class DirectCaseContext implements CaseContext {
 
+    private final LocalDateTime startDate;
+
+    private LocalDateTime currentDate;
+
     private int cellCount;
 
     private Grid3D grid;
 
-    /** Индекс материала по ячейке. */
+    /** Идентификатор материала по ячейке. */
     private int[] materialIdByCell;
 
     /** Текущая температура по ячейке, °C. */
@@ -64,6 +82,10 @@ public class DirectCaseContext implements CaseContext {
     /** Кеш температуры замерзания по ячейке. */
     private double[] freezingTemperatureByCell;
 
+    private EnumMap<Face, BoundaryConditionType[]> typeByCellFaceMap = new EnumMap<>(Face.class);
+    private EnumMap<Face, int[]> bcIdFaceMap = new EnumMap<>(Face.class);
+    private BoundaryConditionLibrary bcLibrary;
+
     /**
      * Создаёт начальное runtime-состояние расчёта
      * на основе расчётного случая.
@@ -82,11 +104,14 @@ public class DirectCaseContext implements CaseContext {
     public DirectCaseContext(SimulationCase c) {
         Objects.requireNonNull(c, "simulation case");
 
+        this.startDate = Objects.requireNonNull(c.time().startDate(), "startDate");
+        this.currentDate = startDate;
+
         this.grid = Objects.requireNonNull(c.grid(), "grid");
 
         MaterialField materialField = Objects.requireNonNull(c.materialField(), "materialField");
         MaterialLibrary materialLibrary = Objects.requireNonNull(c.materialLibrary(), "materialLibrary");
-        this.materialIdByCell = Objects.requireNonNull(materialField.materialIndexByCell(), "materialIndexByCell");
+        this.materialIdByCell = Objects.requireNonNull(materialField.materialIdByCell(), "materialIdByCell");
 
         TemperatureField temperatureField = Objects.requireNonNull(c.temperatureField(), "temperatureField");
         this.temperatureCByCell = Objects.requireNonNull(temperatureField.temperatureCByCell(), "temperatureCByCell");
@@ -100,7 +125,7 @@ public class DirectCaseContext implements CaseContext {
 
         if (materialIdByCell.length != cellCount) {
             throw new IllegalStateException(
-                    "materialIndexByCell length mismatch: expected " + cellCount + ", actual "
+                    "materialIdByCell length mismatch: expected " + cellCount + ", actual "
                             + materialIdByCell.length);
         }
         if (temperatureCByCell.length != cellCount) {
@@ -118,7 +143,7 @@ public class DirectCaseContext implements CaseContext {
 
         for (int i = 0; i < cellCount; i++) {
             int materialId = materialIdByCell[i];
-            Material material = materialLibrary.getByIndex(materialId);
+            Material material = materialLibrary.getById(materialId);
 
             thermalConductivityThawedByCell[i] = material.thermalConductivityThawed();
             thermalConductivityFrozenByCell[i] = material.thermalConductivityFrozen();
@@ -126,6 +151,36 @@ public class DirectCaseContext implements CaseContext {
             heatCapacityFrozenByCell[i] = material.heatCapacityFrozen();
             phaseTransitionsHeatByCell[i] = material.phaseTransitionsHeat();
             freezingTemperatureByCell[i] = material.freezingTemperature();
+        }
+
+        // Граничные условия
+        this.bcLibrary = c.bcLibrary();
+        for (Face face : Face.values()) {
+            int[] faceBcId = c.bcField().raw(face);
+            int expected = (int) grid.faceGrid(face).cellCount();
+            if (faceBcId.length != expected) {
+                throw new IllegalStateException(
+                        "Boundary condition array length mismatch for face " + face +
+                                ": expected " + expected + ", actual " + faceBcId.length);
+            }
+            BoundaryConditionType[] typeByCell = new BoundaryConditionType[faceBcId.length];
+            for (int i = 0; i < faceBcId.length; i++) {
+                BoundaryCondition condition = bcLibrary.getById(faceBcId[i]);
+                switch (condition.type()) {
+                    case FIRST_KIND -> {
+                        typeByCell[i] = BoundaryConditionType.FIRST_KIND;
+                    }
+                    case SECOND_KIND -> {
+                        typeByCell[i] = BoundaryConditionType.SECOND_KIND;
+                    }
+                    case THIRD_KIND -> {
+                        typeByCell[i] = BoundaryConditionType.THIRD_KIND;
+                    }
+                }
+            }
+
+            typeByCellFaceMap.put(face, typeByCell);
+            bcIdFaceMap.put(face, faceBcId);
         }
     }
 
@@ -159,7 +214,7 @@ public class DirectCaseContext implements CaseContext {
     }
 
     @Override
-    public double heatCapacity(int x, int y, int z) {
+    public double volumetricHeatCapacity(int x, int y, int z) {
         int idx = idx(x, y, z);
         if (isFrozen(idx)) {
             return heatCapacityFrozenByCell[idx];
@@ -234,39 +289,10 @@ public class DirectCaseContext implements CaseContext {
         return temperatureCByCell;
     }
 
-    // -------------------------------------------------------------------------
-    // Быстрый доступ по линейному индексу
-    // -------------------------------------------------------------------------
-
-    @Override
-    public double thermalConductivity(int idx) {
-        if (isFrozen(idx)) {
-            return thermalConductivityFrozenByCell[idx];
-        } else {
-            return thermalConductivityThawedByCell[idx];
-        }
-    }
-
-    @Override
-    public double heatCapacity(int idx) {
-        if (isFrozen(idx)) {
-            return heatCapacityFrozenByCell[idx];
-        } else {
-            return heatCapacityThawedByCell[idx];
-        }
-    }
-
-    @Override
-    public double phaseTransitionsHeat(int cellIndex) {
-        return phaseTransitionsHeatByCell[cellIndex];
-    }
-
-    @Override
     public double freezingTemperature(int cellIndex) {
         return freezingTemperatureByCell[cellIndex];
     }
 
-    @Override
     public double temperatureC(int cellIndex) {
         return temperatureCByCell[cellIndex];
     }
@@ -275,5 +301,100 @@ public class DirectCaseContext implements CaseContext {
         double t = temperatureC(idx);
         double tFreezing = freezingTemperature(idx);
         return t <= tFreezing;
+    }
+
+    // -------------------------------------------------------------------------
+    // Время
+    // -------------------------------------------------------------------------
+
+    @Override
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    @Override
+    public LocalDateTime getCurrentDate() {
+        return currentDate;
+    }
+
+    @Override
+    public void setCurrentTime(long seconds) {
+        currentDate = startDate.plusSeconds(seconds);
+    }
+
+    // -------------------------------------------------------------------------
+    // Граничные условия
+    // -------------------------------------------------------------------------
+
+    @Override
+    public boolean hasBoundaryCondition(int x, int y, int z, Face face) {
+        return switch (face) {
+            case X_MAX -> x == grid.n(Axis3D.X) - 1;
+            case X_MIN -> x == 0;
+            case Y_MAX -> y == grid.n(Axis3D.Y) - 1;
+            case Y_MIN -> y == 0;
+            case Z_MAX -> z == grid.n(Axis3D.Z) - 1;
+            case Z_MIN -> z == 0;
+        };
+    }
+
+    @Override
+    public BoundaryConditionType boundaryConditionType(int x, int y, int z, Face face) {
+        if (hasBoundaryCondition(x, y, z, face)) {
+            return typeByCellFaceMap.get(face)[position3dToIndex2d(x, y, z, face)];
+        }
+        throw new IllegalArgumentException(
+                "There is no boundary condition near position = (" + x + ", " + y + ", " + z + ")");
+    }
+
+    @Override
+    public double boundaryTemperatureC(int x, int y, int z, Face face) {
+        Month currentMonth = currentDate.getMonth();
+        return getBoundaryCondition(x, y, z, face).temperature().get(currentMonth);
+    }
+
+    @Override
+    public double boundaryHeatFlux(int x, int y, int z, Face face) {
+        Month currentMonth = currentDate.getMonth();
+        return getBoundaryCondition(x, y, z, face).heatFlux().get(currentMonth);
+    }
+
+    @Override
+    public double boundaryAmbientTemperatureC(int x, int y, int z, Face face) {
+        Month currentMonth = currentDate.getMonth();
+        return getBoundaryCondition(x, y, z, face).ambientTemperature().get(currentMonth);
+    }
+
+    @Override
+    public double boundaryHeatTransferCoeff(int x, int y, int z, Face face) {
+        Month currentMonth = currentDate.getMonth();
+        return getBoundaryCondition(x, y, z, face).heatTransferCoefficient().get(currentMonth);
+    }
+
+    private BoundaryCondition getBoundaryCondition(int x, int y, int z, Face face) {
+        if (hasBoundaryCondition(x, y, z, face)) {
+            int bcId = bcIdFaceMap.get(face)[position3dToIndex2d(x, y, z, face)];
+            return bcLibrary.getById(bcId);
+        }
+        throw new IllegalArgumentException(
+                "There is no boundary condition near position = (" + x + ", " + y + ", " + z + ")");
+    }
+
+    /**
+     * Переводит позицию в трехмерной сетке в индекс одномерного массива для
+     * двухмерной плоскости
+     * 
+     * @param x
+     * @param y
+     * @param z
+     * @param face
+     * @return индекс массива для двухмерной плоскости
+     */
+    private int position3dToIndex2d(int x, int y, int z, Face face) {
+        return switch (face) {
+            case X_MAX, X_MIN -> grid.faceGrid(face).index(y, z);
+            case Y_MAX, Y_MIN -> grid.faceGrid(face).index(x, z);
+            case Z_MAX, Z_MIN -> grid.faceGrid(face).index(x, y);
+        };
     }
 }

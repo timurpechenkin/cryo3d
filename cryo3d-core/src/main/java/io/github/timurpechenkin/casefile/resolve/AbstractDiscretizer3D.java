@@ -29,7 +29,7 @@ public class AbstractDiscretizer3D<T> {
         int[] indexArr = new int[(int) cellCount];
 
         // default item id -> defaultIndex
-        int defaultIndex = lib.indexOf(field.defaultValue());
+        int defaultIndex = lib.idOf(field.defaultValue());
 
         // compile rules once
         List<CompiledRule> compiledRules = compiler.compileRules(field.rules(), lib);

@@ -22,7 +22,7 @@ public class Compiler<T> {
                 throw new IllegalArgumentException("Rule '" + rule.name() + "' has null selector");
             if (rule.value() == null)
                 throw new IllegalArgumentException("Rule '" + rule.name() + "' has null value");
-            int idx = lib.indexOf(rule.value());
+            int idx = lib.idOf(rule.value());
             return new CompiledRule(rule.name(), compileSelector(rule.selector()), idx);
         }).toList();
     }

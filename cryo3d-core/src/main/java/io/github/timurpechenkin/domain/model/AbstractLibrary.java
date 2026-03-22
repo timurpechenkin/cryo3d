@@ -19,7 +19,7 @@ public abstract class AbstractLibrary<T> implements Library<T> {
         return index;
     }
 
-    public int indexOf(String name) {
+    public int idOf(String name) {
         Integer idx = nameToIndex.get(name);
         if (idx == null) {
             throw new IllegalArgumentException("Unknown item name: " + name);
@@ -27,12 +27,12 @@ public abstract class AbstractLibrary<T> implements Library<T> {
         return idx;
     }
 
-    public T getByIndex(int index) {
-        return list.get(index);
+    public T getById(int id) {
+        return list.get(id);
     }
 
     public T getByName(String name) {
-        return list.get(indexOf(name));
+        return list.get(idOf(name));
     }
 
     public int size() {

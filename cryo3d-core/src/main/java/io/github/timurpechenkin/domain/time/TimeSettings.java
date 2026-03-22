@@ -1,8 +1,11 @@
 package io.github.timurpechenkin.domain.time;
 
+import java.time.LocalDateTime;
+
 public record TimeSettings(
-        long dtSeconds,
-        long saveEverySeconds,
-        long totalSeconds) {
+                LocalDateTime startDate,
+                LocalDateTime endDate,
+                long dtSeconds,
+                long saveEverySeconds) {
 
 }

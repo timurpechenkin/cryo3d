@@ -1,5 +1,7 @@
 package io.github.timurpechenkin.casefile;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -93,16 +95,28 @@ public final class CaseValidator {
         if (simulationCase.time() == null) {
             result.add("time", "time params must not be empty");
         } else {
+            LocalDateTime startDate = simulationCase.time().startDate();
+            LocalDateTime endDate = simulationCase.time().endDate();
+            int startDateYear = startDate.getYear();
+            int endDateYear = endDate.getYear();
             long dt = simulationCase.time().dtSeconds();
             long save = simulationCase.time().saveEverySeconds();
-            long total = simulationCase.time().totalSeconds();
-
+            long total = Duration.between(startDate, endDate).getSeconds();
+            if (dt <= 0)
+                result.add("time.dtSeconds", "dtSeconds must be more than zero");
             if (save < dt)
                 result.add("time.saveEverySeconds", "saveEverySeconds must be >= dtSeconds");
             if (save % dt != 0)
                 result.add("time.saveEverySeconds", "saveEverySeconds must be multiple of dtSeconds");
-            if (total % dt != 0)
-                result.add("time.totalSeconds", "totalSeconds must be multiple of dtSeconds");
+            if (dt * 5 > total)
+                result.add("time.dtSeconds",
+                        "dtSeconds must be at least 5 times smaller than total duration (endDate-startDate)");
+            if (!endDate.isAfter(startDate)
+                    || endDateYear - startDateYear > 1000)
+                result.add("time.endDate",
+                        "endDate must be after startDate, and the difference between them must be less than 1000 years: startDate="
+                                + simulationCase.time().startDate()
+                                + ", endDate=" + simulationCase.time().endDate());
         }
 
         // 3) Проверка materials

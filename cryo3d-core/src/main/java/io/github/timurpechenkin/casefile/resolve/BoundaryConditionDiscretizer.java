@@ -95,7 +95,7 @@ public final class BoundaryConditionDiscretizer {
         int ny = grid.n(Axis3D.Y);
 
         int[] arr = new int[nx * ny];
-        int defaultIndex = lib.indexOf(field.defaultValue());
+        int defaultIndex = lib.idOf(field.defaultValue());
 
         for (int y = 0; y < ny; y++) {
             int y2 = grid.centersScaled2(Axis3D.Y)[y];
@@ -117,7 +117,7 @@ public final class BoundaryConditionDiscretizer {
         int ny = grid.n(Axis3D.Y);
 
         int[] arr = new int[ny * nz];
-        int defaultIndex = lib.indexOf(field.defaultValue());
+        int defaultIndex = lib.idOf(field.defaultValue());
 
         for (int z = 0; z < nz; z++) {
             int z2 = grid.centersScaled2(Axis3D.Z)[z];
@@ -139,7 +139,7 @@ public final class BoundaryConditionDiscretizer {
         int nz = grid.n(Axis3D.Z);
 
         int[] arr = new int[nx * nz];
-        int defaultIndex = lib.indexOf(field.defaultValue());
+        int defaultIndex = lib.idOf(field.defaultValue());
 
         for (int z = 0; z < nz; z++) {
             int z2 = grid.centersScaled2(Axis3D.Z)[z];

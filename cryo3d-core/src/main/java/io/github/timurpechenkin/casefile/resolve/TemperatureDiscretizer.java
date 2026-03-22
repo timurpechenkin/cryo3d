@@ -12,7 +12,7 @@ public class TemperatureDiscretizer extends AbstractDiscretizer3D<Temperature> {
         double[] temperatureArr = new double[indexArr.length];
 
         for (int i = 0; i < temperatureArr.length; i++) {
-            Temperature temperature = lib.getByIndex(indexArr[i]);
+            Temperature temperature = lib.getById(indexArr[i]);
             switch (temperature.type()) {
                 case CONSTANT:
                     temperatureArr[i] = temperature.value();

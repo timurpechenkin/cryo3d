@@ -18,7 +18,7 @@ public final class ProfileCsvWriter {
             int[] materialIndexByCell, MaterialLibrary matLib, String profileName) throws IOException {
         WriteToCsv toCsvFunc = (w, idx3d) -> {
             int matIndex = materialIndexByCell[idx3d];
-            String matName = matLib.getByIndex(matIndex).name();
+            String matName = matLib.getById(matIndex).name();
             w.write(",");
             w.write(Csv.esc(matName));
         };

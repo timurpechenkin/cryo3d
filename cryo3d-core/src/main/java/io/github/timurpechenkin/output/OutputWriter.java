@@ -47,7 +47,7 @@ public class OutputWriter {
         MaterialField materialField = c.materialField();
         MaterialLibrary materialLibrary = c.materialLibrary();
         for (Profile profile : c.profiles()) {
-            profileCsvWriter.writeMaterialGridCsv(startDir, profile, materialField.materialIndexByCell(),
+            profileCsvWriter.writeMaterialGridCsv(startDir, profile, materialField.materialIdByCell(),
                     materialLibrary, profile.name() + "_material_0");
             profileCsvWriter.writeTemperatureGridCsv(startDir, profile, temperatureField.temperatureCByCell(),
                     profile.name() + "_temperature_0");

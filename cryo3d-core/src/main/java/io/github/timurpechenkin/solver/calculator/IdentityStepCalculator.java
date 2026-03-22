@@ -14,7 +14,8 @@ public final class IdentityStepCalculator implements StepCalculator {
     @Override
     public void calculateStep(
             CaseContext context,
-            long dtSeconds) {
+            long dtSeconds,
+            long currentTimeSeconds) {
 
     }
 
