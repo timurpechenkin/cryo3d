@@ -14,7 +14,7 @@ import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.output.OutputWriter;
 import io.github.timurpechenkin.solver.CaseSolver;
 import io.github.timurpechenkin.solver.DefaultCaseSolver;
-import io.github.timurpechenkin.solver.calculator.IdentityStepCalculator;
+import io.github.timurpechenkin.solver.calculator.ExplicitNoPhaseStepCalculator;
 import io.github.timurpechenkin.solver.context.DirectCaseContextFactory;
 import io.github.timurpechenkin.solver.result.CaseResult;
 import picocli.CommandLine.Command;
@@ -57,7 +57,8 @@ public class RunCommand implements Runnable {
             writer.writeSummary(simulationCase, caseName);
             System.out.println("OK: wrote " + outDir.resolve("summary.json"));
 
-            CaseSolver solver = new DefaultCaseSolver(new IdentityStepCalculator(), new DirectCaseContextFactory());
+            CaseSolver solver = new DefaultCaseSolver(new ExplicitNoPhaseStepCalculator(),
+                    new DirectCaseContextFactory());
             CaseResult result = solver.solve(simulationCase);
 
             writer.writeResult(result, caseName);

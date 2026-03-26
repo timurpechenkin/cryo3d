@@ -86,6 +86,10 @@ public class DirectCaseContext implements CaseContext {
     private EnumMap<Face, int[]> bcIdFaceMap = new EnumMap<>(Face.class);
     private BoundaryConditionLibrary bcLibrary;
 
+    private EnumMap<Axis3D, double[]> cellSideAxis3dMap = new EnumMap<>(Axis3D.class);
+    private EnumMap<Axis3D, double[]> areaNormalAxisMap = new EnumMap<>(Axis3D.class);
+    private double[] volumeByCell;
+
     /**
      * Создаёт начальное runtime-состояние расчёта
      * на основе расчётного случая.
@@ -166,21 +170,49 @@ public class DirectCaseContext implements CaseContext {
             BoundaryConditionType[] typeByCell = new BoundaryConditionType[faceBcId.length];
             for (int i = 0; i < faceBcId.length; i++) {
                 BoundaryCondition condition = bcLibrary.getById(faceBcId[i]);
-                switch (condition.type()) {
-                    case FIRST_KIND -> {
-                        typeByCell[i] = BoundaryConditionType.FIRST_KIND;
-                    }
-                    case SECOND_KIND -> {
-                        typeByCell[i] = BoundaryConditionType.SECOND_KIND;
-                    }
-                    case THIRD_KIND -> {
-                        typeByCell[i] = BoundaryConditionType.THIRD_KIND;
-                    }
-                }
+                typeByCell[i] = condition.type();
             }
 
             typeByCellFaceMap.put(face, typeByCell);
             bcIdFaceMap.put(face, faceBcId);
+        }
+
+        // Геометрия
+        for (Axis3D axis3d : Axis3D.values()) {
+            double[] sellSide = new double[cellCount];
+            for (int i = 0; i < cellCount; i++) {
+                int[] position3d = grid.position(i);
+                int p1d = switch (axis3d) {
+                    case X -> position3d[0];
+                    case Y -> position3d[1];
+                    case Z -> position3d[2];
+                };
+                sellSide[i] = grid.axis(axis3d).stepMeters(p1d);
+            }
+            cellSideAxis3dMap.put(axis3d, sellSide);
+        }
+
+        this.volumeByCell = new double[cellCount];
+        for (int i = 0; i < cellCount; i++) {
+            double sideX = cellSideAxis3dMap.get(Axis3D.X)[i];
+            double sideY = cellSideAxis3dMap.get(Axis3D.Y)[i];
+            double sideZ = cellSideAxis3dMap.get(Axis3D.Z)[i];
+            volumeByCell[i] = sideX * sideY * sideZ;
+        }
+
+        for (Axis3D axis : Axis3D.values()) {
+            double[] area = new double[cellCount];
+            for (int i = 0; i < cellCount; i++) {
+                double sideX = cellSideAxis3dMap.get(Axis3D.X)[i];
+                double sideY = cellSideAxis3dMap.get(Axis3D.Y)[i];
+                double sideZ = cellSideAxis3dMap.get(Axis3D.Z)[i];
+                area[i] = switch (axis) {
+                    case X -> sideY * sideZ;
+                    case Y -> sideX * sideZ;
+                    case Z -> sideX * sideY;
+                };
+            }
+            areaNormalAxisMap.put(axis, area);
         }
     }
 
@@ -195,7 +227,7 @@ public class DirectCaseContext implements CaseContext {
     }
 
     // -------------------------------------------------------------------------
-    // Материал
+    // ТЕПЛОФИЗИЧЕСКИЕ СВОЙСТВА
     // -------------------------------------------------------------------------
 
     @Override
@@ -233,8 +265,36 @@ public class DirectCaseContext implements CaseContext {
         return freezingTemperatureByCell[idx(x, y, z)];
     }
 
+    @Override
+    public double thermalConductivity(int index) {
+        if (isFrozen(index)) {
+            return thermalConductivityFrozenByCell[index];
+        } else {
+            return thermalConductivityThawedByCell[index];
+        }
+    }
+
+    @Override
+    public double volumetricHeatCapacity(int index) {
+        if (isFrozen(index)) {
+            return heatCapacityFrozenByCell[index];
+        } else {
+            return heatCapacityThawedByCell[index];
+        }
+    }
+
+    @Override
+    public double phaseTransitionsHeat(int index) {
+        return phaseTransitionsHeatByCell[index];
+    }
+
+    @Override
+    public double freezingTemperature(int index) {
+        return freezingTemperatureByCell[index];
+    }
+
     // -------------------------------------------------------------------------
-    // Температура
+    // ТЕМПЕРАТУРА
     // -------------------------------------------------------------------------
 
     /**
@@ -248,6 +308,11 @@ public class DirectCaseContext implements CaseContext {
     @Override
     public double temperatureC(int x, int y, int z) {
         return temperatureCByCell[idx(x, y, z)];
+    }
+
+    @Override
+    public double temperatureC(int cellIndex) {
+        return temperatureCByCell[cellIndex];
     }
 
     /**
@@ -289,14 +354,6 @@ public class DirectCaseContext implements CaseContext {
         return temperatureCByCell;
     }
 
-    public double freezingTemperature(int cellIndex) {
-        return freezingTemperatureByCell[cellIndex];
-    }
-
-    public double temperatureC(int cellIndex) {
-        return temperatureCByCell[cellIndex];
-    }
-
     private boolean isFrozen(int idx) {
         double t = temperatureC(idx);
         double tFreezing = freezingTemperature(idx);
@@ -304,7 +361,7 @@ public class DirectCaseContext implements CaseContext {
     }
 
     // -------------------------------------------------------------------------
-    // Время
+    // ВРЕМЯ
     // -------------------------------------------------------------------------
 
     @Override
@@ -323,7 +380,7 @@ public class DirectCaseContext implements CaseContext {
     }
 
     // -------------------------------------------------------------------------
-    // Граничные условия
+    // ГРАНИЧНЫЕ УСЛОВИЯ
     // -------------------------------------------------------------------------
 
     @Override
@@ -396,5 +453,42 @@ public class DirectCaseContext implements CaseContext {
             case Y_MAX, Y_MIN -> grid.faceGrid(face).index(x, z);
             case Z_MAX, Z_MIN -> grid.faceGrid(face).index(x, y);
         };
+    }
+
+    // ------------------------------------------------
+    // ГЕОМЕТРИЯ
+    // ------------------------------------------------
+
+    @Override
+    public double cellSideMeters(int x, int y, int z, Axis3D axis3d) {
+        int index = idx(x, y, z);
+        return cellSideAxis3dMap.get(axis3d)[index];
+    }
+
+    @Override
+    public double areaNormalToAxisMeters2(int x, int y, int z, Axis3D axis3d) {
+        int index = idx(x, y, z);
+        return areaNormalAxisMap.get(axis3d)[index];
+    }
+
+    @Override
+    public double volumeMeters3(int x, int y, int z) {
+        int index = idx(x, y, z);
+        return volumeByCell[index];
+    }
+
+    @Override
+    public double cellSideMeters(int index, Axis3D axis3d) {
+        return cellSideAxis3dMap.get(axis3d)[index];
+    }
+
+    @Override
+    public double areaNormalToAxisMeters2(int index, Axis3D axis3d) {
+        return areaNormalAxisMap.get(axis3d)[index];
+    }
+
+    @Override
+    public double volumeMeters3(int index) {
+        return volumeByCell[index];
     }
 }

@@ -2,7 +2,7 @@ caseName: "demo-freezing"
 
 time:
     startDate: "2000-01-01T00:00:00.000"
-    endDate: "2000-01-07T00:00:00.000"
+    endDate: "2000-01-30T00:00:00.000"
     dtSeconds: 3600 # шаг расчёта (сек)
     saveEverySeconds: 86400 # шаг сохранения (сек)
 
@@ -10,15 +10,15 @@ grid:
     axes:
         X:
             - from: 0.0
-              to: 10.0
+              to: 50.0
               step: 1.0
         Y:
             - from: 0.0
-              to: 10.0
+              to: 50.0
               step: 1.0
         Z:
             - from: 0.0
-              to: 10.0
+              to: 50.0
               step: 1.0
 
 boundaryConditions:
@@ -71,26 +71,22 @@ materials:
     # L - удельная теплота фазового перехода [Дж/м3]
     # Tbf - температура замерзания грунта [°C]
     definitions:
+        # Песок (влажный, плотный)
         m1:
-            thermalConductivityThawed: 0.570
-            thermalConductivityFrozen: 2.220
-            heatCapacityThawed: 4200
-            heatCapacityFrozen: 2100
-            phaseTransitionsHeat: 334000
+            thermalConductivityThawed: 1.8
+            thermalConductivityFrozen: 2.5
+            heatCapacityThawed: 2100000
+            heatCapacityFrozen: 1800000
+            phaseTransitionsHeat: 40000000
             freezingTemperature: 0
+            
+        # Глина (влажная, пластичная)
         m2:
-            thermalConductivityThawed: 1.000
-            thermalConductivityFrozen: 2.500
-            heatCapacityThawed: 4500
-            heatCapacityFrozen: 2500
-            phaseTransitionsHeat: 300000
-            freezingTemperature: -1
-        material3:
-            thermalConductivityThawed: 1.500
-            thermalConductivityFrozen: 3.500
-            heatCapacityThawed: 4000
-            heatCapacityFrozen: 2000
-            phaseTransitionsHeat: 100000
+            thermalConductivityThawed: 1.2
+            thermalConductivityFrozen: 2.0
+            heatCapacityThawed: 2800000
+            heatCapacityFrozen: 2000000
+            phaseTransitionsHeat: 80000000
             freezingTemperature: -0.5
     field:
         default: m1
@@ -122,12 +118,14 @@ temperature:
 
 profiles:
     - name: "line-y"
-      pointA: [5.0, 0.0, 0.0]
-      pointB: [5.0, 10.0, 0.0]
+      pointA: [25.0, 0.0, 0.0]
+      pointB: [25.0, 50.0, 0.0]
     - name: "line-x"
-      pointA: [0.0, 5.0, 0.0]
-      pointB: [10.0, 5.0, 0.0]
+      pointA: [0.0, 25.0, 0.0]
+      pointB: [50.0, 25.0, 0.0]
 
 samplePoints:
     - name: "center"
-      point: [5.0, 5.0, 5.0]
+      point: [25.0, 25.0, 25.0]
+    - name: "bottom"
+      point: [25.0, 25.0, 48.0]

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import io.github.timurpechenkin.domain.bc.BoundaryConditionType;
 import io.github.timurpechenkin.domain.grid.Grid3D;
+import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Face;
 
 /**
@@ -77,6 +78,10 @@ public interface CaseContext {
      */
     int materialId(int x, int y, int z);
 
+    // -----------------------------------------------
+    // ТЕПЛОФИЗИЧЕСКИЕ ХАРАКТЕРИСТИКИ
+    // -----------------------------------------------
+
     /**
      * Возвращает теплопроводность ячейки
      * при текущем температурном состоянии, [Вт/(м·К)]
@@ -91,6 +96,8 @@ public interface CaseContext {
      * @return эффективная теплопроводность
      */
     double thermalConductivity(int x, int y, int z);
+
+    double thermalConductivity(int index);
 
     /**
      * Возвращает объёмную теплоёмкость ячейки
@@ -107,6 +114,8 @@ public interface CaseContext {
      */
     double volumetricHeatCapacity(int x, int y, int z);
 
+    double volumetricHeatCapacity(int index);
+
     /**
      * Возвращает скрытую теплоту фазового перехода для ячейки, [Дж/м3]
      *
@@ -116,6 +125,8 @@ public interface CaseContext {
      * @return скрытая теплота фазового перехода
      */
     double phaseTransitionsHeat(int x, int y, int z);
+
+    double phaseTransitionsHeat(int index);
 
     /**
      * Возвращает температуру замерзания материала в ячейке, [C]
@@ -127,15 +138,11 @@ public interface CaseContext {
      */
     double freezingTemperature(int x, int y, int z);
 
-    /**
-     * Возвращает текущую температуру ячейки, [C]
-     *
-     * @param x позиция по оси X
-     * @param y позиция по оси Y
-     * @param z позиция по оси Z
-     * @return текущая температура ячейки, °C
-     */
-    double temperatureC(int x, int y, int z);
+    double freezingTemperature(int index);
+
+    // -----------------------------------------------
+    // ГРАНИЧНЫЕ УСЛОВИЯ
+    // -----------------------------------------------
 
     /**
      * Проверяет, лежит ли указанная грань ячейки на внешней границе расчётной
@@ -234,6 +241,22 @@ public interface CaseContext {
      */
     double boundaryHeatTransferCoeff(int x, int y, int z, Face face);
 
+    // -----------------------------------------------
+    // ТЕМПЕРАТУРНОЕ ПОЛЕ
+    // -----------------------------------------------
+
+    /**
+     * Возвращает текущую температуру ячейки, [C]
+     *
+     * @param x позиция по оси X
+     * @param y позиция по оси Y
+     * @param z позиция по оси Z
+     * @return текущая температура ячейки, °C
+     */
+    double temperatureC(int x, int y, int z);
+
+    double temperatureC(int cellIndex);
+
     /**
      * Заменяет текущее температурное поле новым состоянием системы.
      *
@@ -260,6 +283,10 @@ public interface CaseContext {
      */
     double[] currentTemperatureByCell();
 
+    // -----------------------------------------------
+    // ВРЕМЯ
+    // -----------------------------------------------
+
     /**
      * Возвращает начальный момент времени контекста.
      *
@@ -281,4 +308,20 @@ public interface CaseContext {
      * @param seconds число секунд от начала расчёта
      */
     void setCurrentTime(long seconds);
+
+    // -----------------------------------------------
+    // ГЕОМЕТРИЯ
+    // -----------------------------------------------
+
+    double cellSideMeters(int x, int y, int z, Axis3D axis3d);
+
+    double areaNormalToAxisMeters2(int x, int y, int z, Axis3D axis3d);
+
+    double volumeMeters3(int x, int y, int z);
+
+    double cellSideMeters(int index, Axis3D axis3d);
+
+    double areaNormalToAxisMeters2(int index, Axis3D axis3d);
+
+    double volumeMeters3(int index);
 }
