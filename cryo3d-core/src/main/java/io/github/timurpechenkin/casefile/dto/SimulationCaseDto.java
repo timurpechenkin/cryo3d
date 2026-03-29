@@ -5,10 +5,11 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.github.timurpechenkin.casefile.dto.bc.BoundaryConditionSpecDto;
+import io.github.timurpechenkin.casefile.dto.config.CaseConfigDto;
 import io.github.timurpechenkin.casefile.dto.grid.GridSpecDto;
 import io.github.timurpechenkin.casefile.dto.material.MaterialSpecDto;
-import io.github.timurpechenkin.casefile.dto.measurement.ProfileDto;
-import io.github.timurpechenkin.casefile.dto.measurement.SamplePointDto;
+import io.github.timurpechenkin.casefile.dto.recording.ProfileDto;
+import io.github.timurpechenkin.casefile.dto.recording.SamplePointDto;
 import io.github.timurpechenkin.casefile.dto.temperature.TemperatureSpecDto;
 import io.github.timurpechenkin.casefile.dto.time.TimeSettingsDto;
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record SimulationCaseDto(
                 @NotBlank @JsonProperty("caseName") String caseName,
+                @NotNull @Valid @JsonProperty("config") CaseConfigDto config,
                 @NotNull @Valid @JsonProperty("time") TimeSettingsDto time,
                 @NotNull @Valid @JsonProperty("grid") GridSpecDto grid,
                 @NotNull @Valid @JsonProperty("boundaryConditions") BoundaryConditionSpecDto boundaryConditions,

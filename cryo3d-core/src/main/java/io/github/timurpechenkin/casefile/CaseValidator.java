@@ -100,14 +100,9 @@ public final class CaseValidator {
             int startDateYear = startDate.getYear();
             int endDateYear = endDate.getYear();
             long dt = simulationCase.time().dtSeconds();
-            long save = simulationCase.time().saveEverySeconds();
             long total = Duration.between(startDate, endDate).getSeconds();
             if (dt <= 0)
                 result.add("time.dtSeconds", "dtSeconds must be more than zero");
-            if (save < dt)
-                result.add("time.saveEverySeconds", "saveEverySeconds must be >= dtSeconds");
-            if (save % dt != 0)
-                result.add("time.saveEverySeconds", "saveEverySeconds must be multiple of dtSeconds");
             if (dt * 5 > total)
                 result.add("time.dtSeconds",
                         "dtSeconds must be at least 5 times smaller than total duration (endDate-startDate)");

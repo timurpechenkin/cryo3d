@@ -8,9 +8,10 @@ import java.util.Map;
 
 import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.dto.bc.BoundaryConditionDefinition;
+import io.github.timurpechenkin.casefile.dto.config.CaseConfigDto;
 import io.github.timurpechenkin.casefile.dto.grid.GridSpecDto;
 import io.github.timurpechenkin.casefile.dto.material.MaterialDefinition;
-import io.github.timurpechenkin.casefile.dto.measurement.*;
+import io.github.timurpechenkin.casefile.dto.recording.*;
 import io.github.timurpechenkin.casefile.dto.temperature.TemperatureDefinition;
 import io.github.timurpechenkin.casefile.dto.time.TimeSettingsDto;
 import io.github.timurpechenkin.casefile.resolve.BoundaryConditionDiscretizer;
@@ -22,12 +23,13 @@ import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.domain.bc.BoundaryCondition;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionField;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
+import io.github.timurpechenkin.domain.config.CaseConfig;
 import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
-import io.github.timurpechenkin.domain.measurement.Profile;
-import io.github.timurpechenkin.domain.measurement.SamplePoint;
+import io.github.timurpechenkin.domain.recording.Profile;
+import io.github.timurpechenkin.domain.recording.SamplePoint;
 import io.github.timurpechenkin.domain.temperature.Temperature;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 import io.github.timurpechenkin.domain.temperature.TemperatureLibrary;
@@ -72,8 +74,12 @@ public final class CaseResolver {
         // 6) sample points
         List<SamplePoint> samplePoints = resolveSamplePoints(dto.samplePoints(), grid);
 
+        // 7) config
+        CaseConfig config = resolveSolverConfig(dto.config());
+
         return new SimulationCase(
                 dto.caseName(),
+                config,
                 time,
                 grid,
                 bcLibrary,
@@ -86,8 +92,12 @@ public final class CaseResolver {
                 samplePoints);
     }
 
+    private CaseConfig resolveSolverConfig(CaseConfigDto dto) {
+        return new CaseConfig(dto.stepCalculatorKey(), dto.materialModelKey());
+    }
+
     private TimeSettings resolveTime(TimeSettingsDto t) {
-        return new TimeSettings(t.startDate(), t.endDate(), t.dtSeconds(), t.saveEverySeconds());
+        return new TimeSettings(t.startDate(), t.endDate(), t.dtSeconds());
     }
 
     private Grid3D resolveGrid(GridSpecDto g) {
@@ -156,7 +166,7 @@ public final class CaseResolver {
             int y = grid.findCellScaled(Axis3D.Y, metersToScaled(dto.point().y()));
             int z = grid.findCellScaled(Axis3D.Z, metersToScaled(dto.point().z()));
             int cellIndex = grid.index(x, y, z);
-            samplePoints.add(new SamplePoint(dto.name(), toPoint3d(dto.point()), cellIndex));
+            samplePoints.add(new SamplePoint(dto.name(), dto.saveStep(), toPoint3d(dto.point()), cellIndex));
         }
         return samplePoints;
     }

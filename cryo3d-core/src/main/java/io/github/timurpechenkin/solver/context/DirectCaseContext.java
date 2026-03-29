@@ -83,11 +83,11 @@ public class DirectCaseContext implements CaseContext {
     private double[] freezingTemperatureByCell;
 
     private EnumMap<Face, BoundaryConditionType[]> typeByCellFaceMap = new EnumMap<>(Face.class);
-    private EnumMap<Face, int[]> bcIdFaceMap = new EnumMap<>(Face.class);
+    private EnumMap<Face, int[]> bcIdByFaceMap = new EnumMap<>(Face.class);
     private BoundaryConditionLibrary bcLibrary;
 
-    private EnumMap<Axis3D, double[]> cellSideAxis3dMap = new EnumMap<>(Axis3D.class);
-    private EnumMap<Axis3D, double[]> areaNormalAxisMap = new EnumMap<>(Axis3D.class);
+    private EnumMap<Axis3D, double[]> cellSideByAxisMap = new EnumMap<>(Axis3D.class);
+    private EnumMap<Axis3D, double[]> areaNormalByAxisMap = new EnumMap<>(Axis3D.class);
     private double[] volumeByCell;
 
     /**
@@ -105,38 +105,18 @@ public class DirectCaseContext implements CaseContext {
      * @throws IllegalStateException если размеры полей не совпадают
      *                               с размером расчётной сетки
      */
-    public DirectCaseContext(SimulationCase c) {
-        Objects.requireNonNull(c, "simulation case");
+    public DirectCaseContext(SimulationCase simulationCase) {
+        Objects.requireNonNull(simulationCase, "simulationCase");
 
-        this.startDate = Objects.requireNonNull(c.time().startDate(), "startDate");
+        this.startDate = requireStartDate(simulationCase);
         this.currentDate = startDate;
+        this.grid = requireGrid(simulationCase);
+        this.cellCount = resolveCellCount(grid);
 
-        this.grid = Objects.requireNonNull(c.grid(), "grid");
+        this.materialIdByCell = requireMaterialIds(simulationCase);
+        this.temperatureCByCell = requireTemperatureField(simulationCase);
 
-        MaterialField materialField = Objects.requireNonNull(c.materialField(), "materialField");
-        MaterialLibrary materialLibrary = Objects.requireNonNull(c.materialLibrary(), "materialLibrary");
-        this.materialIdByCell = Objects.requireNonNull(materialField.materialIdByCell(), "materialIdByCell");
-
-        TemperatureField temperatureField = Objects.requireNonNull(c.temperatureField(), "temperatureField");
-        this.temperatureCByCell = Objects.requireNonNull(temperatureField.temperatureCByCell(), "temperatureCByCell");
-
-        long cellCountLong = grid.cellCount();
-        if (cellCountLong > Integer.MAX_VALUE) {
-            throw new IllegalStateException(
-                    "Grid is too large for int[]-based solver arrays: cellCount=" + cellCountLong);
-        }
-        this.cellCount = (int) cellCountLong;
-
-        if (materialIdByCell.length != cellCount) {
-            throw new IllegalStateException(
-                    "materialIdByCell length mismatch: expected " + cellCount + ", actual "
-                            + materialIdByCell.length);
-        }
-        if (temperatureCByCell.length != cellCount) {
-            throw new IllegalStateException(
-                    "temperatureCByCell length mismatch: expected " + cellCount + ", actual "
-                            + temperatureCByCell.length);
-        }
+        validateCellArrayLengths();
 
         this.thermalConductivityThawedByCell = new double[cellCount];
         this.thermalConductivityFrozenByCell = new double[cellCount];
@@ -144,6 +124,66 @@ public class DirectCaseContext implements CaseContext {
         this.heatCapacityFrozenByCell = new double[cellCount];
         this.phaseTransitionsHeatByCell = new double[cellCount];
         this.freezingTemperatureByCell = new double[cellCount];
+
+        this.typeByCellFaceMap = new EnumMap<>(Face.class);
+        this.bcIdByFaceMap = new EnumMap<>(Face.class);
+        this.bcLibrary = requireBoundaryConditionLibrary(simulationCase);
+
+        this.cellSideByAxisMap = new EnumMap<>(Axis3D.class);
+        this.areaNormalByAxisMap = new EnumMap<>(Axis3D.class);
+        this.volumeByCell = new double[cellCount];
+
+        initMaterialCache(simulationCase);
+        initBoundaryConditions(simulationCase);
+        initGeometry();
+    }
+
+    private static LocalDateTime requireStartDate(SimulationCase simulationCase) {
+        return Objects.requireNonNull(simulationCase.time().startDate(), "startDate");
+    }
+
+    private static Grid3D requireGrid(SimulationCase simulationCase) {
+        return Objects.requireNonNull(simulationCase.grid(), "grid");
+    }
+
+    private static int resolveCellCount(Grid3D grid) {
+        long cellCountLong = grid.cellCount();
+        if (cellCountLong > Integer.MAX_VALUE) {
+            throw new IllegalStateException(
+                    "Grid is too large for int[]/double[] solver arrays: cellCount=" + cellCountLong);
+        }
+        return (int) cellCountLong;
+    }
+
+    private static int[] requireMaterialIds(SimulationCase simulationCase) {
+        MaterialField materialField = Objects.requireNonNull(simulationCase.materialField(), "materialField");
+        return Objects.requireNonNull(materialField.materialIdByCell(), "materialIdByCell");
+    }
+
+    private static double[] requireTemperatureField(SimulationCase simulationCase) {
+        TemperatureField temperatureField = Objects.requireNonNull(simulationCase.temperatureField(),
+                "temperatureField");
+        return Objects.requireNonNull(temperatureField.temperatureCByCell(), "temperatureCByCell");
+    }
+
+    private static BoundaryConditionLibrary requireBoundaryConditionLibrary(SimulationCase simulationCase) {
+        return Objects.requireNonNull(simulationCase.bcLibrary(), "bcLibrary");
+    }
+
+    private void validateCellArrayLengths() {
+        if (materialIdByCell.length != cellCount) {
+            throw new IllegalStateException(
+                    "materialIdByCell length mismatch: expected " + cellCount + ", actual " + materialIdByCell.length);
+        }
+        if (temperatureCByCell.length != cellCount) {
+            throw new IllegalStateException(
+                    "temperatureCByCell length mismatch: expected " + cellCount + ", actual "
+                            + temperatureCByCell.length);
+        }
+    }
+
+    private void initMaterialCache(SimulationCase simulationCase) {
+        MaterialLibrary materialLibrary = Objects.requireNonNull(simulationCase.materialLibrary(), "materialLibrary");
 
         for (int i = 0; i < cellCount; i++) {
             int materialId = materialIdByCell[i];
@@ -156,70 +196,88 @@ public class DirectCaseContext implements CaseContext {
             phaseTransitionsHeatByCell[i] = material.phaseTransitionsHeat();
             freezingTemperatureByCell[i] = material.freezingTemperature();
         }
+    }
 
-        // Граничные условия
-        this.bcLibrary = c.bcLibrary();
+    private void initBoundaryConditions(SimulationCase simulationCase) {
+        Objects.requireNonNull(simulationCase.bcField(), "bcField");
+
         for (Face face : Face.values()) {
-            int[] faceBcId = c.bcField().raw(face);
-            int expected = (int) grid.faceGrid(face).cellCount();
-            if (faceBcId.length != expected) {
-                throw new IllegalStateException(
-                        "Boundary condition array length mismatch for face " + face +
-                                ": expected " + expected + ", actual " + faceBcId.length);
-            }
-            BoundaryConditionType[] typeByCell = new BoundaryConditionType[faceBcId.length];
-            for (int i = 0; i < faceBcId.length; i++) {
-                BoundaryCondition condition = bcLibrary.getById(faceBcId[i]);
-                typeByCell[i] = condition.type();
+            int[] bcIdByFaceCell = simulationCase.bcField().raw(face);
+            validateBoundaryConditionArrayLength(face, bcIdByFaceCell);
+
+            BoundaryConditionType[] typeByFaceCell = new BoundaryConditionType[bcIdByFaceCell.length];
+            for (int i = 0; i < bcIdByFaceCell.length; i++) {
+                BoundaryCondition condition = bcLibrary.getById(bcIdByFaceCell[i]);
+                typeByFaceCell[i] = condition.type();
             }
 
-            typeByCellFaceMap.put(face, typeByCell);
-            bcIdFaceMap.put(face, faceBcId);
+            bcIdByFaceMap.put(face, bcIdByFaceCell);
+            typeByCellFaceMap.put(face, typeByFaceCell);
         }
+    }
 
-        // Геометрия
-        for (Axis3D axis3d : Axis3D.values()) {
-            double[] sellSide = new double[cellCount];
+    private void validateBoundaryConditionArrayLength(Face face, int[] bcIdByFaceCell) {
+        int expected = (int) grid.faceGrid(face).cellCount();
+        if (bcIdByFaceCell.length != expected) {
+            throw new IllegalStateException(
+                    "Boundary condition array length mismatch for face " + face
+                            + ": expected " + expected + ", actual " + bcIdByFaceCell.length);
+        }
+    }
+
+    private void initGeometry() {
+        initCellSideByAxis();
+        initVolumeByCell();
+        initAreaNormalByAxis();
+    }
+
+    private void initCellSideByAxis() {
+        for (Axis3D axis : Axis3D.values()) {
+            double[] cellSideByCell = new double[cellCount];
             for (int i = 0; i < cellCount; i++) {
-                int[] position3d = grid.position(i);
-                int p1d = switch (axis3d) {
-                    case X -> position3d[0];
-                    case Y -> position3d[1];
-                    case Z -> position3d[2];
+                int[] position = grid.position(i);
+                int axisPosition = switch (axis) {
+                    case X -> position[0];
+                    case Y -> position[1];
+                    case Z -> position[2];
                 };
-                sellSide[i] = grid.axis(axis3d).stepMeters(p1d);
+                cellSideByCell[i] = grid.axis(axis).stepMeters(axisPosition);
             }
-            cellSideAxis3dMap.put(axis3d, sellSide);
+            cellSideByAxisMap.put(axis, cellSideByCell);
         }
+    }
 
-        this.volumeByCell = new double[cellCount];
+    private void initVolumeByCell() {
+        double[] sideX = cellSideByAxisMap.get(Axis3D.X);
+        double[] sideY = cellSideByAxisMap.get(Axis3D.Y);
+        double[] sideZ = cellSideByAxisMap.get(Axis3D.Z);
+
         for (int i = 0; i < cellCount; i++) {
-            double sideX = cellSideAxis3dMap.get(Axis3D.X)[i];
-            double sideY = cellSideAxis3dMap.get(Axis3D.Y)[i];
-            double sideZ = cellSideAxis3dMap.get(Axis3D.Z)[i];
-            volumeByCell[i] = sideX * sideY * sideZ;
+            volumeByCell[i] = sideX[i] * sideY[i] * sideZ[i];
         }
+    }
+
+    private void initAreaNormalByAxis() {
+        double[] sideX = cellSideByAxisMap.get(Axis3D.X);
+        double[] sideY = cellSideByAxisMap.get(Axis3D.Y);
+        double[] sideZ = cellSideByAxisMap.get(Axis3D.Z);
 
         for (Axis3D axis : Axis3D.values()) {
-            double[] area = new double[cellCount];
+            double[] areaByCell = new double[cellCount];
             for (int i = 0; i < cellCount; i++) {
-                double sideX = cellSideAxis3dMap.get(Axis3D.X)[i];
-                double sideY = cellSideAxis3dMap.get(Axis3D.Y)[i];
-                double sideZ = cellSideAxis3dMap.get(Axis3D.Z)[i];
-                area[i] = switch (axis) {
-                    case X -> sideY * sideZ;
-                    case Y -> sideX * sideZ;
-                    case Z -> sideX * sideY;
+                areaByCell[i] = switch (axis) {
+                    case X -> sideY[i] * sideZ[i];
+                    case Y -> sideX[i] * sideZ[i];
+                    case Z -> sideX[i] * sideY[i];
                 };
             }
-            areaNormalAxisMap.put(axis, area);
+            areaNormalByAxisMap.put(axis, areaByCell);
         }
     }
 
-    @Override
-    public Grid3D grid() {
-        return grid;
-    }
+    // -------------------------------------------------------------------------
+    // ИНДЕКС ОДНОМЕРНОГО МАССИВА
+    // -------------------------------------------------------------------------
 
     @Override
     public int idx(int x, int y, int z) {
@@ -361,25 +419,6 @@ public class DirectCaseContext implements CaseContext {
     }
 
     // -------------------------------------------------------------------------
-    // ВРЕМЯ
-    // -------------------------------------------------------------------------
-
-    @Override
-    public LocalDateTime getStartDate() {
-        return startDate;
-    }
-
-    @Override
-    public LocalDateTime getCurrentDate() {
-        return currentDate;
-    }
-
-    @Override
-    public void setCurrentTime(long seconds) {
-        currentDate = startDate.plusSeconds(seconds);
-    }
-
-    // -------------------------------------------------------------------------
     // ГРАНИЧНЫЕ УСЛОВИЯ
     // -------------------------------------------------------------------------
 
@@ -430,7 +469,7 @@ public class DirectCaseContext implements CaseContext {
 
     private BoundaryCondition getBoundaryCondition(int x, int y, int z, Face face) {
         if (hasBoundaryCondition(x, y, z, face)) {
-            int bcId = bcIdFaceMap.get(face)[position3dToIndex2d(x, y, z, face)];
+            int bcId = bcIdByFaceMap.get(face)[position3dToIndex2d(x, y, z, face)];
             return bcLibrary.getById(bcId);
         }
         throw new IllegalArgumentException(
@@ -455,20 +494,44 @@ public class DirectCaseContext implements CaseContext {
         };
     }
 
+    // -------------------------------------------------------------------------
+    // ВРЕМЯ
+    // -------------------------------------------------------------------------
+
+    @Override
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    @Override
+    public LocalDateTime getCurrentDate() {
+        return currentDate;
+    }
+
+    @Override
+    public void setCurrentTime(long seconds) {
+        currentDate = startDate.plusSeconds(seconds);
+    }
+
     // ------------------------------------------------
     // ГЕОМЕТРИЯ
     // ------------------------------------------------
 
     @Override
+    public Grid3D grid() {
+        return grid;
+    }
+
+    @Override
     public double cellSideMeters(int x, int y, int z, Axis3D axis3d) {
         int index = idx(x, y, z);
-        return cellSideAxis3dMap.get(axis3d)[index];
+        return cellSideByAxisMap.get(axis3d)[index];
     }
 
     @Override
     public double areaNormalToAxisMeters2(int x, int y, int z, Axis3D axis3d) {
         int index = idx(x, y, z);
-        return areaNormalAxisMap.get(axis3d)[index];
+        return areaNormalByAxisMap.get(axis3d)[index];
     }
 
     @Override
@@ -479,12 +542,12 @@ public class DirectCaseContext implements CaseContext {
 
     @Override
     public double cellSideMeters(int index, Axis3D axis3d) {
-        return cellSideAxis3dMap.get(axis3d)[index];
+        return cellSideByAxisMap.get(axis3d)[index];
     }
 
     @Override
     public double areaNormalToAxisMeters2(int index, Axis3D axis3d) {
-        return areaNormalAxisMap.get(axis3d)[index];
+        return areaNormalByAxisMap.get(axis3d)[index];
     }
 
     @Override

@@ -1,6 +1,6 @@
 package io.github.timurpechenkin.solver.result;
 
-import io.github.timurpechenkin.domain.measurement.SamplePoint;
+import io.github.timurpechenkin.domain.recording.SamplePoint;
 
 /**
  * История температуры в контрольной точке.
@@ -10,6 +10,6 @@ import io.github.timurpechenkin.domain.measurement.SamplePoint;
  * @param temperatureFrames записи температуры по шагам, °C
  */
 public record SamplePointSeries(
-                SamplePoint samplePoint,
-                TemperatureFrame1D[] temperatureFrames) {
+        SamplePoint samplePoint,
+        TemperatureFrame1D[] temperatureFrames) {
 }

@@ -4,7 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import io.github.timurpechenkin.domain.measurement.SamplePoint;
+import io.github.timurpechenkin.domain.recording.SamplePoint;
 import io.github.timurpechenkin.solver.result.TemperatureFrame1D;
 
 public class PointCsvWriter {

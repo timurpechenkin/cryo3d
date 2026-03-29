@@ -17,13 +17,11 @@ import java.util.List;
  * историю температур по точкам и профилям.
  *
  * @param caseName      имя расчётного случая
- * @param timeSeconds   времена сохранённых состояний, сек
  * @param pointSeries   история температур по контрольным точкам
  * @param profileSeries история температур по профилям
  */
 public record CaseResult(
-        String caseName,
-        double[] timeSeconds,
-        List<SamplePointSeries> pointSeries,
-        List<ProfileSeries> profileSeries) {
+                String caseName,
+                List<SamplePointSeries> pointSeries,
+                List<ProfileSeries> profileSeries) {
 }

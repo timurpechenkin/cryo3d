@@ -64,7 +64,7 @@ public final class ExplicitNoPhaseStepCalculator implements StepCalculator {
 
                 for (int x = 0; x < nx; x++) {
 
-                    int i = grid.index(x, y, z);
+                    int i = context.idx(x, y, z);
 
                     // Суммарная тепловая мощность, входящая в ячейку, [Вт]
                     double heatRateIn = 0.0;
@@ -74,8 +74,8 @@ public final class ExplicitNoPhaseStepCalculator implements StepCalculator {
                     }
 
                     double tCell = current[i];
-                    double cVol = context.volumetricHeatCapacity(x, y, z);
-                    double volume = context.volumeMeters3(x, y, z);
+                    double cVol = context.volumetricHeatCapacity(i);
+                    double volume = context.volumeMeters3(i);
 
                     next[i] = tCell + (dtSeconds * heatRateIn) / (cVol * volume);
                 }

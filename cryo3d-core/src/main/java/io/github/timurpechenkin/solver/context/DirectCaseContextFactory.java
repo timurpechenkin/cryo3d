@@ -26,8 +26,6 @@ public final class DirectCaseContextFactory implements CaseContextFactory {
     @Override
     public CaseContext create(SimulationCase simulationCase) {
         Objects.requireNonNull(simulationCase, "simulationCase");
-
-        DirectCaseContext context = new DirectCaseContext(simulationCase);
-        return context;
+        return new DirectCaseContext(simulationCase);
     }
 }

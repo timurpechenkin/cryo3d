@@ -1,10 +1,13 @@
 caseName: "demo-freezing"
 
+config:
+    stepCalculatorKey: "ExplicitNoPhaseStepCalculator"
+    materialModelKey: "DirectCaseContext"
+
 time:
-    startDate: "2000-01-01T00:00:00.000"
-    endDate: "2000-01-30T00:00:00.000"
+    startDate: "2000-01-01T00:00:00"
+    endDate: "2001-01-01T00:00:00"
     dtSeconds: 3600 # шаг расчёта (сек)
-    saveEverySeconds: 86400 # шаг сохранения (сек)
 
 grid:
     axes:
@@ -118,14 +121,18 @@ temperature:
 
 profiles:
     - name: "line-y"
+      saveStep: 100
       pointA: [25.0, 0.0, 0.0]
       pointB: [25.0, 50.0, 0.0]
     - name: "line-x"
+      saveStep: 100
       pointA: [0.0, 25.0, 0.0]
       pointB: [50.0, 25.0, 0.0]
 
 samplePoints:
     - name: "center"
+      saveStep: 50 # шаг сохранения (кратен)
       point: [25.0, 25.0, 25.0]
     - name: "bottom"
+      saveStep: 50
       point: [25.0, 25.0, 48.0]

@@ -1,12 +1,14 @@
-package io.github.timurpechenkin.casefile.dto.measurement;
+package io.github.timurpechenkin.casefile.dto.recording;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
 public record ProfileDto(
         @NotBlank @JsonProperty("name") String name,
+        @Min(1) @JsonProperty("saveStep") int saveStep,
         @Valid @JsonProperty("pointA") PointDto pointA,
         @Valid @JsonProperty("pointB") PointDto pointB) {
 }

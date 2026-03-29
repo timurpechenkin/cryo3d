@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 
-import io.github.timurpechenkin.casefile.dto.measurement.PointDto;
-import io.github.timurpechenkin.casefile.dto.measurement.ProfileDto;
+import io.github.timurpechenkin.casefile.dto.recording.PointDto;
+import io.github.timurpechenkin.casefile.dto.recording.ProfileDto;
 import io.github.timurpechenkin.domain.grid.AxisGrid;
 import io.github.timurpechenkin.domain.grid.Grid2D;
 import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.domain.grid.VirtualGrid2D;
-import io.github.timurpechenkin.domain.measurement.Profile;
+import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.geometry.Axis2D;
 import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Point3D;
@@ -78,7 +78,7 @@ public class ProfileDiscretizer {
         Grid2D grid2d = buildProfileGrid2D(path, grid3d);
         int[] cellIndex = buildCellIndex(path, grid2d, grid3d);
 
-        return new Profile(name, pointA, pointB, grid2d, cellIndex);
+        return new Profile(name, profileDto.saveStep(), pointA, pointB, grid2d, cellIndex);
     }
 
     private ProfilePath2D tracePathXY(Grid3D grid3d, Point3D a, Point3D b, int lengthScaled) {

@@ -74,9 +74,6 @@ public final class DefaultCaseSolver implements CaseSolver {
         if (time.dtSeconds() <= 0) {
             throw new IllegalArgumentException("TimeSettings.dtSeconds must be > 0");
         }
-        if (time.saveEverySeconds() % time.dtSeconds() != 0) {
-            throw new IllegalArgumentException("saveEverySeconds must be a multiple of dtSeconds");
-        }
 
         long totalSeconds = Duration.between(time.startDate(), time.endDate()).getSeconds();
         long stepsLong = totalSeconds / time.dtSeconds();
@@ -85,34 +82,16 @@ public final class DefaultCaseSolver implements CaseSolver {
         }
         int steps = (int) stepsLong;
 
-        long saveStepLong = time.saveEverySeconds() / time.dtSeconds();
-        if (saveStepLong <= 0 || saveStepLong > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("save steps must be > 0 and < Integer.MAX_VALUE");
-        }
-        int saveStep = (int) saveStepLong;
-        int savedSteps = steps / saveStep + 1;
-
-        CaseResultAccumulator accumulator = new CaseResultAccumulator(simulationCase, savedSteps);
-        accumulator.recordStep(0, 0, context.currentTemperatureByCell());
-
+        CaseResultAccumulator accumulator = new CaseResultAccumulator(simulationCase, steps);
         long dtSeconds = time.dtSeconds();
-        int saveIndex = 1;
+        accumulator.recordStep(0, 0, context.currentTemperatureByCell());
 
         for (int step = 1; step <= steps; step++) {
             long currentTimeSeconds = step * dtSeconds;
-
             calculator.calculateStep(context, dtSeconds, currentTimeSeconds);
-
-            if (isSaveStep(step, saveStep)) {
-                accumulator.recordStep(saveIndex, currentTimeSeconds, context.currentTemperatureByCell());
-                saveIndex++;
-            }
+            accumulator.recordStep(step, currentTimeSeconds, context.currentTemperatureByCell());
         }
 
         return accumulator.build();
-    }
-
-    private boolean isSaveStep(int step, int saveStep) {
-        return step % saveStep == 0;
     }
 }

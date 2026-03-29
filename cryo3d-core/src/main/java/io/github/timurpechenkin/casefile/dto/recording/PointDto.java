@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.casefile.dto.measurement;
+package io.github.timurpechenkin.casefile.dto.recording;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 

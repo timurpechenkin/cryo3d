@@ -9,7 +9,7 @@ import java.nio.file.Path;
 
 import io.github.timurpechenkin.domain.grid.Grid2D;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
-import io.github.timurpechenkin.domain.measurement.Profile;
+import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.geometry.Axis2D;
 
 public final class ProfileCsvWriter {
