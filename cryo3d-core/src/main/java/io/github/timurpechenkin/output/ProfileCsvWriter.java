@@ -6,6 +6,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 import io.github.timurpechenkin.domain.grid.Grid2D;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
@@ -31,7 +32,7 @@ public final class ProfileCsvWriter {
         WriteToCsv toCsvFunc = (w, idx3d) -> {
             double t = temperatureCGrid[idx3d];
             w.write(",");
-            w.write(Double.toString(t));
+            w.write(fmt2(t));
         };
 
         writeToCsv(outDir, profile, profileName, "h\\w", toCsvFunc);
@@ -51,13 +52,13 @@ public final class ProfileCsvWriter {
             for (int wi = 0; wi < nWidth; wi++) {
                 double wMeters = scaled2ToMeters(grid.centerScaled2(Axis2D.W, wi));
                 w.write(",");
-                w.write(Double.toString(wMeters));
+                w.write(fmt2(wMeters));
             }
             w.newLine();
 
             for (int hi = 0; hi < nHeight; hi++) {
                 double hMeters = scaled2ToMeters(grid.centerScaled2(Axis2D.H, hi));
-                w.write(Double.toString(hMeters));
+                w.write(fmt2(hMeters));
                 for (int wi = 0; wi < nWidth; wi++) {
                     int idx2d = profile.grid2d().index(wi, hi);
                     int idx3d = profile.cellIndex()[idx2d];
@@ -83,18 +84,18 @@ public final class ProfileCsvWriter {
             for (int wi = 0; wi < nWidth; wi++) {
                 double wMeters = scaled2ToMeters(grid.centerScaled2(Axis2D.W, wi));
                 w.write(",");
-                w.write(Double.toString(wMeters));
+                w.write(fmt2(wMeters));
             }
             w.newLine();
 
             for (int hi = 0; hi < nHeight; hi++) {
                 double hMeters = scaled2ToMeters(grid.centerScaled2(Axis2D.H, hi));
-                w.write(Double.toString(hMeters));
+                w.write(fmt2(hMeters));
                 for (int wi = 0; wi < nWidth; wi++) {
                     int idx2d = profile.grid2d().index(wi, hi);
                     double t = temperatureCProfile[idx2d];
                     w.write(",");
-                    w.write(Double.toString(t));
+                    w.write(fmt2(t));
                 }
                 w.newLine();
             }
@@ -105,5 +106,9 @@ public final class ProfileCsvWriter {
     private interface WriteToCsv {
         void write(BufferedWriter writer, int idx3d) throws IOException;
 
+    }
+
+    private static String fmt2(double v) {
+        return String.format(Locale.ROOT, "%.2f", v);
     }
 }
