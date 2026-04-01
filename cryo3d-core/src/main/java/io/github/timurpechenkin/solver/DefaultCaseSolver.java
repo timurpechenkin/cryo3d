@@ -8,8 +8,12 @@ import io.github.timurpechenkin.domain.time.TimeSettings;
 import io.github.timurpechenkin.solver.calculator.StepCalculator;
 import io.github.timurpechenkin.solver.context.CaseContext;
 import io.github.timurpechenkin.solver.context.CaseContextFactory;
-import io.github.timurpechenkin.solver.result.CaseResult;
-import io.github.timurpechenkin.solver.result.CaseResultAccumulator;
+import io.github.timurpechenkin.solver.info.SimulationDefinition;
+import io.github.timurpechenkin.solver.info.SimulationDefinitionCollector;
+import io.github.timurpechenkin.solver.metadata.SimulationMetadataCollector;
+import io.github.timurpechenkin.solver.metadata.SimulationMetadata;
+import io.github.timurpechenkin.solver.recording.RecordingAccumulator;
+import io.github.timurpechenkin.solver.recording.RecordingResult;
 
 /**
  * Базовая реализация {@link CaseSolver}.
@@ -23,8 +27,8 @@ import io.github.timurpechenkin.solver.result.CaseResultAccumulator;
  * <li>выполняет временной цикл с постоянным шагом времени;</li>
  * <li>на каждом шаге вызывает {@link StepCalculator};</li>
  * <li>сохраняет выбранные состояния системы через
- * {@link CaseResultAccumulator};</li>
- * <li>формирует итоговый {@link CaseResult}.</li>
+ * {@link RecordingAccumulator};</li>
+ * <li>формирует итоговый {@link RecordingResult}.</li>
  * </ol>
  *
  * <p>
@@ -36,14 +40,6 @@ import io.github.timurpechenkin.solver.result.CaseResultAccumulator;
  * шага;</li>
  * <li>{@link CaseContext} предоставляет текущее состояние среды
  * и эффективные теплофизические свойства при текущей температуре.</li>
- * </ul>
- *
- * <p>
- * В данной реализации:
- * <ul>
- * <li>используется постоянный шаг времени {@code dtSeconds};</li>
- * <li>сохраняется начальное состояние на времени {@code t = 0};</li>
- * <li>далее сохраняются только шаги, кратные {@code saveEverySeconds}.</li>
  * </ul>
  *
  * <p>
@@ -60,7 +56,7 @@ public final class DefaultCaseSolver implements CaseSolver {
     }
 
     @Override
-    public CaseResult solve(SimulationCase simulationCase) {
+    public SimulationResult solve(SimulationCase simulationCase) {
         Objects.requireNonNull(simulationCase, "simulationCase");
 
         CaseContext context = contextFactory.create(simulationCase);
@@ -81,9 +77,11 @@ public final class DefaultCaseSolver implements CaseSolver {
             throw new IllegalArgumentException("steps must be > 0 and < Integer.MAX_VALUE");
         }
         int steps = (int) stepsLong;
-
-        CaseResultAccumulator accumulator = new CaseResultAccumulator(simulationCase, steps);
         long dtSeconds = time.dtSeconds();
+
+        RecordingAccumulator accumulator = new RecordingAccumulator(simulationCase, steps);
+        SimulationMetadataCollector metadataCollector = new SimulationMetadataCollector(simulationCase);
+
         accumulator.recordStep(0, 0, context.currentTemperatureByCell());
 
         for (int step = 1; step <= steps; step++) {
@@ -92,6 +90,10 @@ public final class DefaultCaseSolver implements CaseSolver {
             accumulator.recordStep(step, currentTimeSeconds, context.currentTemperatureByCell());
         }
 
-        return accumulator.build();
+        SimulationDefinitionCollector definitionCollector = new SimulationDefinitionCollector(simulationCase);
+        SimulationDefinition definition = definitionCollector.definition();
+        RecordingResult recording = accumulator.build();
+        SimulationMetadata metadata = metadataCollector.metadata();
+        return new SimulationResult(metadata, definition, recording);
     }
 }

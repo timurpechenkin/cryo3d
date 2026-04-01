@@ -1,5 +1,5 @@
 
-package io.github.timurpechenkin.solver.result;
+package io.github.timurpechenkin.solver.recording;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +29,8 @@ import io.github.timurpechenkin.domain.recording.SamplePoint;
  * Аккумулятор хранит только историю по контрольным точкам и профилям.
  * Полное 3D-поле температур в результирующий объект не включается.
  */
-public final class CaseResultAccumulator {
+public final class RecordingAccumulator {
 
-    private final String caseName;
     private final int maxStepIndex;
 
     private final List<SamplePoint> samplePoints;
@@ -52,13 +51,12 @@ public final class CaseResultAccumulator {
      * @param steps          число шагов в расчёте состояний
      * @throws IllegalArgumentException если {@code steps <= 0}
      */
-    public CaseResultAccumulator(SimulationCase simulationCase, int steps) {
+    public RecordingAccumulator(SimulationCase simulationCase, int steps) {
         Objects.requireNonNull(simulationCase, "simulationCase");
         if (steps <= 0) {
             throw new IllegalArgumentException("totalSteps must be > 0");
         }
         this.maxStepIndex = steps;
-        this.caseName = simulationCase.caseName();
         this.samplePoints = List.copyOf(simulationCase.samplePoints());
         this.profiles = List.copyOf(simulationCase.profiles());
 
@@ -176,7 +174,7 @@ public final class CaseResultAccumulator {
      *
      * @return итоговый результат расчёта
      */
-    public CaseResult build() {
+    public RecordingResult build() {
         List<SamplePointSeries> pointSeries = new ArrayList<>(samplePoints.size());
         for (int p = 0; p < samplePoints.size(); p++) {
             TemperatureFrame1D[] temperatureFrames = pointTemperatureFrames[p];
@@ -193,8 +191,7 @@ public final class CaseResultAccumulator {
                     temperatureFrame2Ds));
         }
 
-        return new CaseResult(
-                caseName,
+        return new RecordingResult(
                 pointSeries,
                 profileSeries);
     }

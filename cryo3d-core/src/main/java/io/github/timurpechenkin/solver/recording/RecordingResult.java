@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.solver.result;
+package io.github.timurpechenkin.solver.recording;
 
 import java.util.List;
 
@@ -16,12 +16,10 @@ import java.util.List;
  * Он содержит только те данные, которые нужны для анализа, вывода и экспорта:
  * историю температур по точкам и профилям.
  *
- * @param caseName      имя расчётного случая
  * @param pointSeries   история температур по контрольным точкам
  * @param profileSeries история температур по профилям
  */
-public record CaseResult(
-                String caseName,
-                List<SamplePointSeries> pointSeries,
-                List<ProfileSeries> profileSeries) {
+public record RecordingResult(
+        List<SamplePointSeries> pointSeries,
+        List<ProfileSeries> profileSeries) {
 }

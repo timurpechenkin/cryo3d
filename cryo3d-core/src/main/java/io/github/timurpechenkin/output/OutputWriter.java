@@ -13,10 +13,10 @@ import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.domain.recording.SamplePoint;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
-import io.github.timurpechenkin.solver.result.CaseResult;
-import io.github.timurpechenkin.solver.result.ProfileSeries;
-import io.github.timurpechenkin.solver.result.SamplePointSeries;
-import io.github.timurpechenkin.solver.result.TemperatureFrame2D;
+import io.github.timurpechenkin.solver.recording.ProfileSeries;
+import io.github.timurpechenkin.solver.recording.RecordingResult;
+import io.github.timurpechenkin.solver.recording.SamplePointSeries;
+import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
 
 public class OutputWriter {
     private final Path outDir;
@@ -54,7 +54,7 @@ public class OutputWriter {
         }
     }
 
-    public void writeResult(CaseResult result, String caseName) throws IOException {
+    public void writeResult(RecordingResult result, String caseName) throws IOException {
         Path resultDir = outDir.resolve(caseName).resolve("result");
 
         // Запись данных температур по профилям в csv

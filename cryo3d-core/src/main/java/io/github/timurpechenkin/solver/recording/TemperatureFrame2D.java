@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.solver.result;
+package io.github.timurpechenkin.solver.recording;
 
 /**
  * Запись значения температуры в плоскости в момент времени.

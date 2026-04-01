@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.solver.result;
+package io.github.timurpechenkin.solver.recording;
 
 import io.github.timurpechenkin.domain.recording.Profile;
 
@@ -27,6 +27,6 @@ import io.github.timurpechenkin.domain.recording.Profile;
  * @param temperatureCByStep история температур профиля по шагам, °C
  */
 public record ProfileSeries(
-        Profile profile,
-        TemperatureFrame2D[] temperatureFrames) {
+                Profile profile,
+                TemperatureFrame2D[] temperatureFrames) {
 }
