@@ -554,4 +554,36 @@ public class DirectCaseContext implements CaseContext {
     public double volumeMeters3(int index) {
         return volumeByCell[index];
     }
+
+    // энтальпия отсутствует
+
+    @Override
+    public double enthalpy(int x, int y, int z) {
+        throw new UnsupportedOperationException("Unimplemented method 'enthalpy'");
+    }
+
+    @Override
+    public double enthalpy(int cellIndex) {
+        throw new UnsupportedOperationException("Unimplemented method 'enthalpy'");
+    }
+
+    @Override
+    public double thawedFraction(int cellIndex) {
+        throw new UnsupportedOperationException("Unimplemented method 'thawedFraction'");
+    }
+
+    @Override
+    public double[] currentEnthalpyByCell() {
+        throw new UnsupportedOperationException("Unimplemented method 'currentEnthalpyByCell'");
+    }
+
+    @Override
+    public void setNewEnthalpy(double[] newEnthalpy) {
+        throw new UnsupportedOperationException("Unimplemented method 'setNewEnthalpy'");
+    }
+
+    @Override
+    public double thawedFraction(int x, int y, int z) {
+        throw new UnsupportedOperationException("Unimplemented method 'thawedFraction'");
+    }
 }
