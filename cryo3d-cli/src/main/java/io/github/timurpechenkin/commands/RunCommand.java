@@ -13,10 +13,8 @@ import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.output.OutputWriter;
 import io.github.timurpechenkin.solver.CaseSolver;
-import io.github.timurpechenkin.solver.DefaultCaseSolver;
+import io.github.timurpechenkin.solver.CaseSolverFactory;
 import io.github.timurpechenkin.solver.SimulationResult;
-import io.github.timurpechenkin.solver.calculator.ExplicitNoPhaseStepCalculator;
-import io.github.timurpechenkin.solver.context.DirectCaseContextFactory;
 import io.github.timurpechenkin.solver.recording.RecordingResult;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -58,8 +56,7 @@ public class RunCommand implements Runnable {
             writer.writeSummary(simulationCase, caseName);
             System.out.println("OK: wrote summary for " + simulationCase.caseName());
 
-            CaseSolver solver = new DefaultCaseSolver(new ExplicitNoPhaseStepCalculator(),
-                    new DirectCaseContextFactory());
+            CaseSolver solver = new CaseSolverFactory().create(simulationCase);
             SimulationResult result = solver.solve(simulationCase);
             RecordingResult recording = result.recording();
 
