@@ -6,7 +6,7 @@ config:
 
 time:
     startDate: "2000-01-01T00:00:00"
-    endDate: "2001-01-01T00:00:00"
+    endDate: "2000-05-01T00:00:00"
     dtSeconds: 3600 # шаг расчёта (сек)
 
 grid:
@@ -121,11 +121,11 @@ temperature:
 
 profiles:
     - name: "line-y"
-      saveStep: 100
+      saveStep: 300
       pointA: [25.0, 0.0, 0.0]
       pointB: [25.0, 50.0, 0.0]
     - name: "line-x"
-      saveStep: 100
+      saveStep: 300
       pointA: [0.0, 25.0, 0.0]
       pointB: [50.0, 25.0, 0.0]
 
