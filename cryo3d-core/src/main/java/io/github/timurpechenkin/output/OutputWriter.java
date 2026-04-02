@@ -1,5 +1,7 @@
 package io.github.timurpechenkin.output;
 
+import static io.github.timurpechenkin.time.TimeConverter.format;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +19,7 @@ import io.github.timurpechenkin.solver.recording.ProfileSeries;
 import io.github.timurpechenkin.solver.recording.RecordingResult;
 import io.github.timurpechenkin.solver.recording.SamplePointSeries;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
+import io.github.timurpechenkin.time.TimeFormat;
 
 public class OutputWriter {
     private final Path outDir;
@@ -54,7 +57,7 @@ public class OutputWriter {
         }
     }
 
-    public void writeResult(RecordingResult result, String caseName) throws IOException {
+    public void writeResult(RecordingResult result, String caseName, TimeFormat timeFormat) throws IOException {
         Path resultDir = outDir.resolve(caseName).resolve("result");
 
         // Запись данных температур по профилям в csv
@@ -64,9 +67,9 @@ public class OutputWriter {
             Path specialProfileDir = profileDir.resolve(profile.name());
             for (TemperatureFrame2D temperatureFrames : profileSeries.temperatureFrames()) {
                 double[] temperatureCByCell = temperatureFrames.temperatureCByCell();
-                long seconds = temperatureFrames.seconds();
+                String time = format(temperatureFrames.seconds(), timeFormat);
                 profileCsvWriter.writeTemperatureProfileCsv(specialProfileDir, profile, temperatureCByCell,
-                        profile.name() + "_temperature_" + seconds);
+                        profile.name() + "_temperature_" + time);
             }
         }
 
@@ -75,7 +78,7 @@ public class OutputWriter {
         for (SamplePointSeries samplePointSeries : result.pointSeries()) {
             SamplePoint samplePoint = samplePointSeries.samplePoint();
             pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePoint, samplePointSeries.temperatureFrames(),
-                    samplePoint.name() + "_temperature");
+                    samplePoint.name() + "_temperature", timeFormat);
         }
 
     }

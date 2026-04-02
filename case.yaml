@@ -3,25 +3,26 @@ caseName: 'demo-freezing'
 config:
     stepCalculatorKey: 'ExplicitStefanEnthalpy'
     materialModelKey: 'StefanEnthalpy'
+    timeFormat: MONTHS
 
 time:
     startDate: '2000-01-01T00:00:00'
-    endDate: '2000-05-01T00:00:00'
+    endDate: '2050-01-01T00:00:00'
     dtSeconds: 3600 # шаг расчёта (сек)
 
 grid:
     axes:
         X:
             - from: 0.0
-              to: 50.0
+              to: 1.0
               step: 1.0
         Y:
             - from: 0.0
-              to: 50.0
+              to: 1.0
               step: 1.0
         Z:
             - from: 0.0
-              to: 50.0
+              to: 100.0
               step: 1.0
 
 boundaryConditions:
@@ -33,18 +34,33 @@ boundaryConditions:
         bc_cold:
             type: FIRST_KIND
             temperature:
-                JANUARY: -15.0
-                FEBRUARY: -15.0
-                MARCH: -15.0
-                APRIL: -15.0
-                MAY: -15.0
-                JUNE: -15.0
-                JULY: -15.0
-                AUGUST: -15.0
-                SEPTEMBER: -15.0
-                OCTOBER: -15.0
-                NOVEMBER: -15.0
-                DECEMBER: -15.0
+                JANUARY: -10
+                FEBRUARY: -10
+                MARCH: -10
+                APRIL: -10
+                MAY: -10
+                JUNE: -10
+                JULY: -10
+                AUGUST: -10
+                SEPTEMBER: -10
+                OCTOBER: -10
+                NOVEMBER: -10
+                DECEMBER: -10
+        bc_neutral:
+            type: SECOND_KIND
+            heatFlow:
+                JANUARY: 0
+                FEBRUARY: 0
+                MARCH: 0
+                APRIL: 0
+                MAY: 0
+                JUNE: 0
+                JULY: 0
+                AUGUST: 0
+                SEPTEMBER: 0
+                OCTOBER: 0
+                NOVEMBER: 0
+                DECEMBER: 0
     field:
         faces:
             Z_MAX:
@@ -54,16 +70,16 @@ boundaryConditions:
                 default: bc_cold
                 rules: []
             X_MAX:
-                default: bc_cold
+                default: bc_neutral
                 rules: []
             X_MIN:
-                default: bc_cold
+                default: bc_neutral
                 rules: []
             Y_MAX:
-                default: bc_cold
+                default: bc_neutral
                 rules: []
             Y_MIN:
-                default: bc_cold
+                default: bc_neutral
                 rules: []
 
 materials:
@@ -93,46 +109,31 @@ materials:
             freezingTemperature: -0.5
     field:
         default: m1
-        rules:
-            - name: 'middle-box'
-              selector:
-                  type: BOX
-                  min: [1, 3, 3]
-                  max: [8, 6, 6]
-              value: m2
 
 temperature:
     definitions:
         temp1:
             type: CONSTANT
-            temperature: 2.0
+            temperature: 10.0
         temp2:
             type: CONSTANT
             temperature: 1.0
     field:
         default: temp1
-        rules:
-            - name: 'warm'
-              selector:
-                  type: Z_RANGE
-                  zMin: 4
-                  zMax: 6
-              value: temp2
 
 profiles:
-    - name: 'line-y'
-      saveStep: 300
-      pointA: [25.0, 0.0, 0.0]
-      pointB: [25.0, 50.0, 0.0]
     - name: 'line-x'
-      saveStep: 300
-      pointA: [0.0, 25.0, 0.0]
-      pointB: [50.0, 25.0, 0.0]
+      saveStep: 100000
+      pointA: [0.5, 0.0, 0.0]
+      pointB: [0.5, 1.0, 0.0]
 
 samplePoints:
     - name: 'center'
-      saveStep: 50 # шаг сохранения (кратен)
-      point: [25.0, 25.0, 25.0]
+      saveStep: 720 # шаг сохранения (кратен)
+      point: [0.5, 0.5, 50.0]
+    - name: 'middle_bottom'
+      saveStep: 720
+      point: [0.5, 0.5, 75.0]
     - name: 'bottom'
-      saveStep: 50
-      point: [25.0, 25.0, 48.0]
+      saveStep: 720
+      point: [0.5, 0.5, 99.5]

@@ -212,6 +212,21 @@ public final class CaseValidator {
             }
         }
 
+        // 6) Проверка config
+        if (simulationCase.config() == null) {
+            result.add("config", "config must not be empty");
+        } else {
+            if (simulationCase.config().materialModelKey() == null) {
+                result.add("config.materialModelKey", "materialModelKey must not bu empty");
+            }
+            if (simulationCase.config().stepCalculatorKey() == null) {
+                result.add("config.stepCalculatorKey", "stepCalculatorKey must not bu empty");
+            }
+            if (simulationCase.config().timeFormat() == null) {
+                result.add("config.timeFormat", "timeFormat must not bu empty");
+            }
+        }
+
         return result;
     }
 

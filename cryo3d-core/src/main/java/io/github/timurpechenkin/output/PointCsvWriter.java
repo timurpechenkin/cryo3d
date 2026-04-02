@@ -7,20 +7,22 @@ import java.util.Locale;
 
 import io.github.timurpechenkin.domain.recording.SamplePoint;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame1D;
+import io.github.timurpechenkin.time.TimeFormat;
+import static io.github.timurpechenkin.time.TimeConverter.*;
 
 public class PointCsvWriter {
 
     public void writeTemperaturePointCsv(Path outDir, SamplePoint samplePoint, TemperatureFrame1D[] temperatureFrames,
-            String pointName)
+            String pointName, TimeFormat timeFormat)
             throws IOException {
 
         Path file = outDir.resolve(pointName + ".csv");
 
         try (BufferedWriter w = Csv.writer(file)) {
-            w.write("seconds");
+            w.write(timeFormat.name());
             for (TemperatureFrame1D frame : temperatureFrames) {
                 w.write(",");
-                w.write(Long.toString(frame.seconds()));
+                w.write(format(frame.seconds(), timeFormat));
             }
             w.newLine();
 

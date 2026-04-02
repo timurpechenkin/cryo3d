@@ -15,16 +15,16 @@ import io.github.timurpechenkin.domain.temperature.TemperatureLibrary;
 import io.github.timurpechenkin.domain.time.TimeSettings;
 
 public record SimulationCase(
-        String caseName,
-        CaseConfig solverConfig,
-        TimeSettings time,
-        Grid3D grid,
-        BoundaryConditionLibrary bcLibrary,
-        BoundaryConditionField bcField,
-        MaterialLibrary materialLibrary,
-        MaterialField materialField,
-        TemperatureLibrary temperatureLibrary,
-        TemperatureField temperatureField,
-        List<Profile> profiles,
-        List<SamplePoint> samplePoints) {
+                String caseName,
+                CaseConfig config,
+                TimeSettings time,
+                Grid3D grid,
+                BoundaryConditionLibrary bcLibrary,
+                BoundaryConditionField bcField,
+                MaterialLibrary materialLibrary,
+                MaterialField materialField,
+                TemperatureLibrary temperatureLibrary,
+                TemperatureField temperatureField,
+                List<Profile> profiles,
+                List<SamplePoint> samplePoints) {
 }

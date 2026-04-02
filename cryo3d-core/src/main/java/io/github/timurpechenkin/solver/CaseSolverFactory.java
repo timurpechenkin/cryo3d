@@ -15,7 +15,7 @@ public final class CaseSolverFactory {
     }
 
     public CaseSolver create(SimulationCase simulationCase) {
-        CaseConfig config = simulationCase.solverConfig();
+        CaseConfig config = simulationCase.config();
         StepCalculator calculator = stepCalculatorRegistry.get(config.stepCalculatorKey());
         CaseContextFactory contextFactory = contextFactoryRegistry.get(config.materialModelKey());
         return new DefaultCaseSolver(calculator, contextFactory);

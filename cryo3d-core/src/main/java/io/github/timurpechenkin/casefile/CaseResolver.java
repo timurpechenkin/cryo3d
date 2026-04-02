@@ -93,7 +93,7 @@ public final class CaseResolver {
     }
 
     private CaseConfig resolveSolverConfig(CaseConfigDto dto) {
-        return new CaseConfig(dto.stepCalculatorKey(), dto.materialModelKey());
+        return new CaseConfig(dto.stepCalculatorKey(), dto.materialModelKey(), dto.timeFormat());
     }
 
     private TimeSettings resolveTime(TimeSettingsDto t) {

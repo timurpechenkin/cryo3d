@@ -60,7 +60,7 @@ public class RunCommand implements Runnable {
             SimulationResult result = solver.solve(simulationCase);
             RecordingResult recording = result.recording();
 
-            writer.writeResult(recording, caseName);
+            writer.writeResult(recording, caseName, result.metadata().timeFormat());
             System.out.println("OK: wrote result for " + simulationCase.caseName());
 
         } catch (Exception ex) {
