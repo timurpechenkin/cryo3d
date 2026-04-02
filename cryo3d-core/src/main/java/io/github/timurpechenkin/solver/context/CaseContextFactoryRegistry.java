@@ -1,7 +1,7 @@
 package io.github.timurpechenkin.solver.context;
 
 public class CaseContextFactoryRegistry {
-    private final static String IDENTITY = "DirectCaseContext";
+    private final static String IDENTITY = "Direct";
     private final static String STEFAN_ENTHALPY = "StefanEnthalpy";
 
     public CaseContextFactory get(String key) {
