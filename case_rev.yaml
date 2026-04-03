@@ -111,6 +111,7 @@ materials:
         default: m1
         rules:
             - name: 'revolution'
+              value: m2
               selector:
                   type: REVOLUTION
                   centerX: 50.0
@@ -119,14 +120,13 @@ materials:
                     - z: 5
                       radius: 5.0
                     - z: 10
-                      radius: 15.0
+                      radius: 9.0
                     - z: 15  
-                      radius: 20.0
-                    - z: 20 
                       radius: 10.0
+                    - z: 20 
+                      radius: 3.0
                     - z: 25
                       radius: 1.0
-              value: m2
               
 temperature:
     definitions:

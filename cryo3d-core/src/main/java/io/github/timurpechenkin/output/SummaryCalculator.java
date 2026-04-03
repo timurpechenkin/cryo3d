@@ -17,24 +17,24 @@ import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Face;
-import io.github.timurpechenkin.output.Summary.BoundaryConditionStatus;
-import io.github.timurpechenkin.output.Summary.FaceBC;
-import io.github.timurpechenkin.output.Summary.GridStats;
-import io.github.timurpechenkin.output.Summary.MaterialStats;
-import io.github.timurpechenkin.output.Summary.TemperatureStats;
+import io.github.timurpechenkin.output.SimulationSummary.BoundaryConditionStatus;
+import io.github.timurpechenkin.output.SimulationSummary.FaceBC;
+import io.github.timurpechenkin.output.SimulationSummary.GridStats;
+import io.github.timurpechenkin.output.SimulationSummary.MaterialStats;
+import io.github.timurpechenkin.output.SimulationSummary.TemperatureStats;
 
 public final class SummaryCalculator {
 
     private SummaryCalculator() {
     }
 
-    public static Summary calculate(SimulationCase c) {
+    public static SimulationSummary calculate(SimulationCase c) {
         GridStats gridStats = gridStats(c.grid());
         MaterialStats materialStats = materialStats(c.materialField(), c.materialLibrary());
         TemperatureStats temperatureStats = temperatureStats(c.temperatureField());
         BoundaryConditionStatus bcStatus = bcStatus(c.bcField(), c.bcLibrary());
 
-        Summary summary = new Summary(
+        SimulationSummary summary = new SimulationSummary(
                 c.caseName(),
                 Instant.now(),
                 c.time(),

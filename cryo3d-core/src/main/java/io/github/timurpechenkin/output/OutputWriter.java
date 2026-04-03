@@ -38,10 +38,10 @@ public class OutputWriter {
     }
 
     public void writeSummary(SimulationCase c, String caseName) throws IOException {
-        Path startDir = outDir.resolve(caseName).resolve("start");
+        Path startDir = outDir.resolve(caseName).resolve("definition");
         Files.createDirectories(startDir);
 
-        Summary summary = SummaryCalculator.calculate(c);
+        SimulationSummary summary = SummaryCalculator.calculate(c);
 
         Path file = startDir.resolve("summary.json");
         jsonMapper.writeValue(file.toFile(), summary);

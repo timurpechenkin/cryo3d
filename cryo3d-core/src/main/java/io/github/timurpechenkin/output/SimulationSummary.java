@@ -7,7 +7,7 @@ import java.util.Map;
 import io.github.timurpechenkin.domain.time.TimeSettings;
 import io.github.timurpechenkin.geometry.Face;
 
-public record Summary(
+public record SimulationSummary(
                 String caseName,
                 Instant startedAtUtc,
                 TimeSettings time,

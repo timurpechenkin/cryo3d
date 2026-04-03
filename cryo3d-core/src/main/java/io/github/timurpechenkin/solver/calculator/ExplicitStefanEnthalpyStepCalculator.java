@@ -75,7 +75,7 @@ public final class ExplicitStefanEnthalpyStepCalculator implements StepCalculato
                     }
 
                     double volume = context.volumeMeters3(i);
-                    nextEnthalpy[i] = currentEnthalpy[i] + (dtSeconds * heatRateIn) / volume;
+                    nextEnthalpy[i] = currentEnthalpy[i] + dtSeconds / volume * heatRateIn;
                 }
             }
         }
@@ -115,9 +115,7 @@ public final class ExplicitStefanEnthalpyStepCalculator implements StepCalculato
             double lambdaCell = context.thermalConductivity(i);
             double lambdaNb = context.thermalConductivity(j);
 
-            double distance = 0.5 * side + 0.5 * sideNb;
-            double lambdaFace = harmonicMean(lambdaCell, 0.5 * side, lambdaNb, 0.5 * sideNb);
-            double q = lambdaFace * (tNb - tCell) / distance;
+            double q = 2 * (tNb - tCell) / (sideNb / lambdaNb + side / lambdaCell);
 
             double area = context.areaNormalToAxisMeters2(i, normal);
             return q * area;
@@ -150,7 +148,7 @@ public final class ExplicitStefanEnthalpyStepCalculator implements StepCalculato
         return switch (type) {
             case FIRST_KIND -> {
                 double tBoundary = context.boundaryTemperatureC(x, y, z, face);
-                double q = lambdaCell * (tBoundary - tCell) / (0.5 * dNormal);
+                double q = (tBoundary - tCell) / ((0.5 * dNormal) / lambdaCell);
                 yield q * area;
             }
             case SECOND_KIND -> {
@@ -160,20 +158,9 @@ public final class ExplicitStefanEnthalpyStepCalculator implements StepCalculato
             case THIRD_KIND -> {
                 double tAmbient = context.boundaryAmbientTemperatureC(x, y, z, face);
                 double alpha = context.boundaryHeatTransferCoeff(x, y, z, face);
-                double q = alpha * (tAmbient - tCell);
+                double q = (tAmbient - tCell) / ((0.5 * dNormal) / lambdaCell + 1.0 / alpha);
                 yield q * area;
             }
         };
-    }
-
-    /**
-     * Гармоническое среднее теплопроводности на внутренней грани.
-     *
-     * <p>
-     * Используется для корректного вычисления потока между двумя соседними
-     * ячейками, особенно если их теплопроводности различаются.
-     */
-    private double harmonicMean(double lambda1, double d1, double lambda2, double d2) {
-        return (d1 + d2) / (d1 / lambda1 + d2 / lambda2);
     }
 }
