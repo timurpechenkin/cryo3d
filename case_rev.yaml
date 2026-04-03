@@ -1,0 +1,161 @@
+caseName: 'rev'
+
+config:
+    stepCalculatorKey: 'ExplicitStefanEnthalpy'
+    materialModelKey: 'StefanEnthalpy'
+    timeFormat: HOURS
+
+time:
+    startDate: '2000-01-01T00:00:00'
+    endDate: '2000-01-02T00:00:00'
+    dtSeconds: 3600 # шаг расчёта (сек)
+
+grid:
+    axes:
+        X:
+            - from: 0.0
+              to: 100.0
+              step: 1.0
+        Y:
+            - from: 0.0
+              to: 100.0
+              step: 1.0
+        Z:
+            - from: 0.0
+              to: 100.0
+              step: 1.0
+
+boundaryConditions:
+    # тип граничного условия (FIRST_KIND, SECOND_KIND, THIRD_KIND)
+    # температура на границе (T, [°C])
+    # поток тепла на границе (q, [Вт/м2])
+    # коэффициент теплообмена на границе (a, [Вт/(м2*К)])
+    definitions:
+        bc_cold:
+            type: FIRST_KIND
+            temperature:
+                JANUARY: -10
+                FEBRUARY: -10
+                MARCH: -10
+                APRIL: -10
+                MAY: -10
+                JUNE: -10
+                JULY: -10
+                AUGUST: -10
+                SEPTEMBER: -10
+                OCTOBER: -10
+                NOVEMBER: -10
+                DECEMBER: -10
+        bc_neutral:
+            type: SECOND_KIND
+            heatFlow:
+                JANUARY: 0
+                FEBRUARY: 0
+                MARCH: 0
+                APRIL: 0
+                MAY: 0
+                JUNE: 0
+                JULY: 0
+                AUGUST: 0
+                SEPTEMBER: 0
+                OCTOBER: 0
+                NOVEMBER: 0
+                DECEMBER: 0
+    field:
+        faces:
+            Z_MAX:
+                default: bc_cold
+                rules: []
+            Z_MIN:
+                default: bc_cold
+                rules: []
+            X_MAX:
+                default: bc_neutral
+                rules: []
+            X_MIN:
+                default: bc_neutral
+                rules: []
+            Y_MAX:
+                default: bc_neutral
+                rules: []
+            Y_MIN:
+                default: bc_neutral
+                rules: []
+
+materials:
+    # λth - теплопроводность грунта в талом состоянии [Вт/(м·К)]
+    # λfz - теплопроводность грунта в мёрзлом состоянии [Вт/(м·К)]
+    # Cth - удельная теплоёмкость грунта в талом состоянии [Дж/(м3·К)]
+    # Cfz - удельная теплоёмкость грунта в мёрзлом состоянии [Дж/(м3·К)]
+    # L - удельная теплота фазового перехода [Дж/м3]
+    # Tbf - температура замерзания грунта [°C]
+    definitions:
+        # Песок (влажный, плотный)
+        m1:
+            thermalConductivityThawed: 1.8
+            thermalConductivityFrozen: 2.5
+            heatCapacityThawed: 2100000
+            heatCapacityFrozen: 1800000
+            phaseTransitionsHeat: 40000000
+            freezingTemperature: 0
+
+        # Глина (влажная, пластичная)
+        m2:
+            thermalConductivityThawed: 1.2
+            thermalConductivityFrozen: 2.0
+            heatCapacityThawed: 2800000
+            heatCapacityFrozen: 2000000
+            phaseTransitionsHeat: 80000000
+            freezingTemperature: -0.5
+    field:
+        default: m1
+        rules:
+            - name: 'revolution'
+              selector:
+                  type: REVOLUTION
+                  centerX: 50.0
+                  centerY: 50.0
+                  radiusPoints:
+                    - z: 5
+                      radius: 5.0
+                    - z: 10
+                      radius: 15.0
+                    - z: 15  
+                      radius: 20.0
+                    - z: 20 
+                      radius: 10.0
+                    - z: 25
+                      radius: 1.0
+              value: m2
+              
+temperature:
+    definitions:
+        temp1:
+            type: CONSTANT
+            temperature: 10.0
+        temp2:
+            type: CONSTANT
+            temperature: 1.0
+    field:
+        default: temp1
+
+profiles:
+    - name: 'line-x'
+      saveStep: 100000
+      pointA: [0.0, 50.0, 0.0]
+      pointB: [100.0, 50.0, 0.0]
+    - name: 'line-y'
+      saveStep: 100000
+      pointA: [50.0, 0.0, 0.0]
+      pointB: [50.0, 100.0, 0.0]
+
+samplePoints:
+    - name: 'center'
+      saveStep: 720 # шаг сохранения (кратен)
+      point: [0.5, 0.5, 50.0]
+    - name: 'middle_bottom'
+      saveStep: 720
+      point: [0.5, 0.5, 75.0]
+    - name: 'bottom'
+      saveStep: 720
+      point: [0.5, 0.5, 99.5]

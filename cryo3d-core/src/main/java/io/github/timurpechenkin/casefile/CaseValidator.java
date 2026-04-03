@@ -15,6 +15,7 @@ import io.github.timurpechenkin.casefile.dto.common.Field;
 import io.github.timurpechenkin.casefile.dto.common.Rule;
 import io.github.timurpechenkin.casefile.dto.grid.Segment;
 import io.github.timurpechenkin.casefile.dto.selector.BoxSelector;
+import io.github.timurpechenkin.casefile.dto.selector.RevolutionSelector;
 import io.github.timurpechenkin.casefile.dto.selector.Selector;
 import io.github.timurpechenkin.casefile.dto.selector.ZRangeSelector;
 import io.github.timurpechenkin.casefile.dto.temperature.TemperatureDefinition;
@@ -271,6 +272,8 @@ public final class CaseValidator {
             checkZ_RANGE(result, path, (ZRangeSelector) selector);
         } else if (selector.getClass() == BoxSelector.class) {
             checkBOX(result, path, (BoxSelector) selector);
+        } else if (selector.getClass() == RevolutionSelector.class) {
+            // временно
         } else {
             result.add(path, "selector has unknown type");
         }
