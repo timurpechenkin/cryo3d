@@ -1,13 +1,16 @@
-caseName: 'demo-freezing'
+caseName: 'line5'
 
 config:
     stepCalculatorKey: 'ExplicitStefanEnthalpy'
     materialModelKey: 'StefanEnthalpy'
-    timeFormat: MONTHS
+    timeFormat: HOURS
+    numberFormat:
+        fractionDigits: 2
+        roundingMode: HALF_UP
 
 time:
     startDate: '2000-01-01T00:00:00'
-    endDate: '2050-01-01T00:00:00'
+    endDate: '2100-01-01T00:00:00'
     dtSeconds: 3600 # шаг расчёта (сек)
 
 grid:
@@ -22,7 +25,7 @@ grid:
               step: 1.0
         Z:
             - from: 0.0
-              to: 100.0
+              to: 50.0
               step: 1.0
 
 boundaryConditions:
@@ -64,7 +67,7 @@ boundaryConditions:
     field:
         faces:
             Z_MAX:
-                default: bc_cold
+                default: bc_neutral
                 rules: []
             Z_MIN:
                 default: bc_cold
@@ -92,21 +95,12 @@ materials:
     definitions:
         # Песок (влажный, плотный)
         m1:
-            thermalConductivityThawed: 1.8
-            thermalConductivityFrozen: 2.5
-            heatCapacityThawed: 2100000
-            heatCapacityFrozen: 1800000
-            phaseTransitionsHeat: 40000000
-            freezingTemperature: 0
-
-        # Глина (влажная, пластичная)
-        m2:
-            thermalConductivityThawed: 1.2
-            thermalConductivityFrozen: 2.0
-            heatCapacityThawed: 2800000
-            heatCapacityFrozen: 2000000
-            phaseTransitionsHeat: 80000000
-            freezingTemperature: -0.5
+            thermalConductivityThawed: 1.95
+            thermalConductivityFrozen: 2.86
+            heatCapacityThawed: 2630000
+            heatCapacityFrozen: 1780000
+            phaseTransitionsHeat: 137030000
+            freezingTemperature: -0.30
     field:
         default: m1
 
@@ -129,11 +123,5 @@ profiles:
 
 samplePoints:
     - name: 'center'
-      saveStep: 720 # шаг сохранения (кратен)
-      point: [0.5, 0.5, 50.0]
-    - name: 'middle_bottom'
-      saveStep: 720
-      point: [0.5, 0.5, 75.0]
-    - name: 'bottom'
-      saveStep: 720
-      point: [0.5, 0.5, 99.5]
+      saveStep: 730 # шаг сохранения (кратен)
+      point: [0.5, 0.5, 24.5]

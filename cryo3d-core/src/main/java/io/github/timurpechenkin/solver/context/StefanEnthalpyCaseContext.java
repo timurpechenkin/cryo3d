@@ -308,19 +308,21 @@ public final class StefanEnthalpyCaseContext implements CaseContext {
 
     @Override
     public void setNewTemperature(double[] newTemperature) {
-        Objects.requireNonNull(newTemperature, "newTemperature");
-        if (newTemperature.length != cellCount) {
-            throw new IllegalStateException(
-                    "newTemperature length mismatch: expected " + cellCount + ", actual " + newTemperature.length);
-        }
+        throw new IllegalArgumentException("Method setNewTemperature is unsupported for StefanEnthalpyCaseContext");
+        // Objects.requireNonNull(newTemperature, "newTemperature");
+        // if (newTemperature.length != cellCount) {
+        // throw new IllegalStateException(
+        // "newTemperature length mismatch: expected " + cellCount + ", actual " +
+        // newTemperature.length);
+        // }
 
-        this.temperatureCByCell = newTemperature;
+        // this.temperatureCByCell = newTemperature;
 
-        double[] newEnthalpy = new double[cellCount];
-        for (int i = 0; i < cellCount; i++) {
-            newEnthalpy[i] = enthalpyFromTemperature(i, this.temperatureCByCell[i]);
-        }
-        this.enthalpyByCell = newEnthalpy;
+        // double[] newEnthalpy = new double[cellCount];
+        // for (int i = 0; i < cellCount; i++) {
+        // newEnthalpy[i] = enthalpyFromTemperature(i, this.temperatureCByCell[i]);
+        // }
+        // this.enthalpyByCell = newEnthalpy;
     }
 
     @Override
@@ -519,5 +521,4 @@ public final class StefanEnthalpyCaseContext implements CaseContext {
             case Z_MAX, Z_MIN -> grid.faceGrid(face).index(x, y);
         };
     }
-
 }

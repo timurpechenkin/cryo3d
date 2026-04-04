@@ -10,6 +10,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.config.NumberFormat;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.recording.Profile;
@@ -53,11 +54,12 @@ public class OutputWriter {
             profileCsvWriter.writeMaterialGridCsv(startDir, profile, materialField.materialIdByCell(),
                     materialLibrary, profile.name() + "_material_0");
             profileCsvWriter.writeTemperatureGridCsv(startDir, profile, temperatureField.temperatureCByCell(),
-                    profile.name() + "_temperature_0");
+                    profile.name() + "_temperature_0", c.config().numberFormat());
         }
     }
 
-    public void writeResult(RecordingResult result, String caseName, TimeFormat timeFormat) throws IOException {
+    public void writeResult(RecordingResult result, String caseName, TimeFormat timeFormat, NumberFormat numberFormat)
+            throws IOException {
         Path resultDir = outDir.resolve(caseName).resolve("result");
 
         // Запись данных температур по профилям в csv
@@ -69,7 +71,7 @@ public class OutputWriter {
                 double[] temperatureCByCell = temperatureFrames.temperatureCByCell();
                 String time = format(temperatureFrames.seconds(), timeFormat);
                 profileCsvWriter.writeTemperatureProfileCsv(specialProfileDir, profile, temperatureCByCell,
-                        profile.name() + "_temperature_" + time);
+                        profile.name() + "_temperature_" + time, numberFormat);
             }
         }
 
@@ -78,7 +80,7 @@ public class OutputWriter {
         for (SamplePointSeries samplePointSeries : result.pointSeries()) {
             SamplePoint samplePoint = samplePointSeries.samplePoint();
             pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePoint, samplePointSeries.temperatureFrames(),
-                    samplePoint.name() + "_temperature", timeFormat);
+                    samplePoint.name() + "_temperature", timeFormat, numberFormat);
         }
 
     }

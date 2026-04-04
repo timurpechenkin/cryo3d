@@ -174,7 +174,7 @@ public final class CaseValidator {
         if (simulationCase.boundaryConditions() == null) {
             result.add("boundaryConditions", "boundaryConditions must not be empty");
         } else if (simulationCase.boundaryConditions().field() == null) {
-            result.add("boundaryConditions.field", "field must not bu empty");
+            result.add("boundaryConditions.field", "field must not be empty");
         } else {
             Map<String, ?> bcDefs = simulationCase.boundaryConditions().definitions();
             if (bcDefs == null || bcDefs.isEmpty()) {
@@ -218,13 +218,13 @@ public final class CaseValidator {
             result.add("config", "config must not be empty");
         } else {
             if (simulationCase.config().materialModelKey() == null) {
-                result.add("config.materialModelKey", "materialModelKey must not bu empty");
+                result.add("config.materialModelKey", "materialModelKey must not be empty");
             }
             if (simulationCase.config().stepCalculatorKey() == null) {
-                result.add("config.stepCalculatorKey", "stepCalculatorKey must not bu empty");
+                result.add("config.stepCalculatorKey", "stepCalculatorKey must not be empty");
             }
             if (simulationCase.config().timeFormat() == null) {
-                result.add("config.timeFormat", "timeFormat must not bu empty");
+                result.add("config.timeFormat", "timeFormat must not be empty");
             }
         }
 

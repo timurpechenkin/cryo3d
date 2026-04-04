@@ -4,11 +4,14 @@ config:
     stepCalculatorKey: 'ExplicitStefanEnthalpy'
     materialModelKey: 'StefanEnthalpy'
     timeFormat: HOURS
-
+    numberFormat:
+        fractionDigits: 2
+        roundingMode: HALF_UP
+        
 time:
     startDate: '2000-01-01T00:00:00'
     endDate: '2000-01-02T00:00:00'
-    dtSeconds: 3600 # шаг расчёта (сек)
+    dtSeconds: 1000 # шаг расчёта (сек)
 
 grid:
     axes:
@@ -151,11 +154,11 @@ profiles:
 
 samplePoints:
     - name: 'center'
-      saveStep: 720 # шаг сохранения (кратен)
+      saveStep: 300 # шаг сохранения (кратен)
       point: [0.5, 0.5, 50.0]
     - name: 'middle_bottom'
-      saveStep: 720
+      saveStep: 300
       point: [0.5, 0.5, 75.0]
     - name: 'bottom'
-      saveStep: 720
+      saveStep: 300
       point: [0.5, 0.5, 99.5]

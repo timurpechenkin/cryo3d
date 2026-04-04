@@ -11,11 +11,13 @@ import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.validation.ValidationError;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.config.NumberFormat;
 import io.github.timurpechenkin.output.OutputWriter;
 import io.github.timurpechenkin.solver.CaseSolver;
 import io.github.timurpechenkin.solver.CaseSolverFactory;
 import io.github.timurpechenkin.solver.SimulationResult;
 import io.github.timurpechenkin.solver.recording.RecordingResult;
+import io.github.timurpechenkin.time.TimeFormat;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -60,7 +62,9 @@ public class RunCommand implements Runnable {
             SimulationResult result = solver.solve(simulationCase);
             RecordingResult recording = result.recording();
 
-            writer.writeResult(recording, caseName, result.metadata().timeFormat());
+            TimeFormat timeFormat = result.metadata().timeFormat();
+            NumberFormat numberFormat = result.metadata().numberFormat();
+            writer.writeResult(recording, caseName, timeFormat, numberFormat);
             System.out.println("OK: wrote result for " + simulationCase.caseName());
 
         } catch (Exception ex) {

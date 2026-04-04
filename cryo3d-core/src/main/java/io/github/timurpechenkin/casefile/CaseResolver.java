@@ -2,6 +2,7 @@ package io.github.timurpechenkin.casefile;
 
 import static io.github.timurpechenkin.geometry.GeometryScale.metersToScaled;
 
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import io.github.timurpechenkin.domain.bc.BoundaryCondition;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionField;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
 import io.github.timurpechenkin.domain.config.CaseConfig;
+import io.github.timurpechenkin.domain.config.NumberFormat;
 import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
@@ -93,7 +95,9 @@ public final class CaseResolver {
     }
 
     private CaseConfig resolveSolverConfig(CaseConfigDto dto) {
-        return new CaseConfig(dto.stepCalculatorKey(), dto.materialModelKey(), dto.timeFormat());
+        RoundingMode roundingMode = RoundingMode.valueOf(dto.numberFormat().roundingMode());
+        NumberFormat numberFormat = new NumberFormat(dto.numberFormat().fractionDigits(), roundingMode);
+        return new CaseConfig(dto.stepCalculatorKey(), dto.materialModelKey(), dto.timeFormat(), numberFormat);
     }
 
     private TimeSettings resolveTime(TimeSettingsDto t) {

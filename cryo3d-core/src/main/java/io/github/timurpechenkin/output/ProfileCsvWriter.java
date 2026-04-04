@@ -1,5 +1,6 @@
 package io.github.timurpechenkin.output;
 
+import static io.github.timurpechenkin.number.NumberConverter.*;
 import static io.github.timurpechenkin.geometry.GeometryScale.scaled2ToMeters;
 
 import java.io.BufferedWriter;
@@ -8,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
+import io.github.timurpechenkin.domain.config.NumberFormat;
 import io.github.timurpechenkin.domain.grid.Grid2D;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.recording.Profile;
@@ -27,12 +29,13 @@ public final class ProfileCsvWriter {
         writeToCsv(outDir, profile, profileName, "h\\w", toCsvFunc);
     }
 
-    public void writeTemperatureGridCsv(Path outDir, Profile profile, double[] temperatureCGrid, String profileName)
+    public void writeTemperatureGridCsv(Path outDir, Profile profile, double[] temperatureCGrid, String profileName,
+            NumberFormat numberFormat)
             throws IOException {
         WriteToCsv toCsvFunc = (w, idx3d) -> {
             double t = temperatureCGrid[idx3d];
             w.write(",");
-            w.write(fmt2(t));
+            w.write(format(t, numberFormat));
         };
 
         writeToCsv(outDir, profile, profileName, "h\\w", toCsvFunc);
@@ -70,7 +73,7 @@ public final class ProfileCsvWriter {
     }
 
     public void writeTemperatureProfileCsv(Path outDir, Profile profile, double[] temperatureCProfile,
-            String profileName) throws IOException {
+            String profileName, NumberFormat numberFormat) throws IOException {
         String sign = "h\\w";
         Grid2D grid = profile.grid2d();
         int nWidth = grid.n(Axis2D.W);
@@ -95,7 +98,7 @@ public final class ProfileCsvWriter {
                     int idx2d = profile.grid2d().index(wi, hi);
                     double t = temperatureCProfile[idx2d];
                     w.write(",");
-                    w.write(fmt2(t));
+                    w.write(format(t, numberFormat));
                 }
                 w.newLine();
             }
