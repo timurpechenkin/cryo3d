@@ -13,6 +13,7 @@ import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.domain.config.NumberFormat;
 import io.github.timurpechenkin.output.OutputWriter;
+import io.github.timurpechenkin.progress.ConsoleProgressListener;
 import io.github.timurpechenkin.solver.CaseSolver;
 import io.github.timurpechenkin.solver.CaseSolverFactory;
 import io.github.timurpechenkin.solver.SimulationResult;
@@ -58,7 +59,7 @@ public class RunCommand implements Runnable {
             writer.writeSummary(simulationCase, caseName);
             System.out.println("OK: wrote summary for " + simulationCase.caseName());
 
-            CaseSolver solver = new CaseSolverFactory().create(simulationCase);
+            CaseSolver solver = new CaseSolverFactory().create(simulationCase, new ConsoleProgressListener(), 100);
             SimulationResult result = solver.solve(simulationCase);
             RecordingResult recording = result.recording();
 

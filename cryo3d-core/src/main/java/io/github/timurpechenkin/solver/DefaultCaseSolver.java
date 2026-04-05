@@ -11,6 +11,8 @@ import io.github.timurpechenkin.solver.context.CaseContextFactory;
 import io.github.timurpechenkin.solver.info.SimulationDefinition;
 import io.github.timurpechenkin.solver.info.SimulationDefinitionCollector;
 import io.github.timurpechenkin.solver.metadata.SimulationMetadataCollector;
+import io.github.timurpechenkin.solver.progress.SimulationProgress;
+import io.github.timurpechenkin.solver.progress.SimulationProgressListener;
 import io.github.timurpechenkin.solver.metadata.SimulationMetadata;
 import io.github.timurpechenkin.solver.recording.RecordingAccumulator;
 import io.github.timurpechenkin.solver.recording.RecordingResult;
@@ -49,10 +51,18 @@ import io.github.timurpechenkin.solver.recording.RecordingResult;
 public final class DefaultCaseSolver implements CaseSolver {
     private final StepCalculator calculator;
     private final CaseContextFactory contextFactory;
+    private final SimulationProgressListener progressListener;
+    private final int targetProgressUpdates;
 
-    public DefaultCaseSolver(StepCalculator calculator, CaseContextFactory contextFactory) {
+    public DefaultCaseSolver(StepCalculator calculator, CaseContextFactory contextFactory,
+            SimulationProgressListener progressListener, int targetProgressUpdates) {
+        if (targetProgressUpdates <= 0) {
+            throw new IllegalArgumentException("targetProgressUpdates must be > 0");
+        }
         this.calculator = Objects.requireNonNull(calculator, "calculator");
         this.contextFactory = Objects.requireNonNull(contextFactory, "contextFactory");
+        this.progressListener = Objects.requireNonNull(progressListener, "progressListener");
+        this.targetProgressUpdates = targetProgressUpdates;
     }
 
     @Override
@@ -82,18 +92,57 @@ public final class DefaultCaseSolver implements CaseSolver {
         RecordingAccumulator accumulator = new RecordingAccumulator(simulationCase, steps);
         SimulationMetadataCollector metadataCollector = new SimulationMetadataCollector(simulationCase);
 
-        accumulator.recordStep(0, 0, context.currentTemperatureByCell());
+        try {
+            progressListener.onStart(steps);
+            accumulator.recordStep(0, 0, context.currentTemperatureByCell());
+            progressListener.onProgress(new SimulationProgress(0, steps, 0, 0.0));
+            int reportEverySteps = computeReportEverySteps(steps, targetProgressUpdates);
 
-        for (int step = 1; step <= steps; step++) {
-            long currentTimeSeconds = step * dtSeconds;
-            calculator.calculateStep(context, dtSeconds, currentTimeSeconds);
-            accumulator.recordStep(step, currentTimeSeconds, context.currentTemperatureByCell());
+            for (int step = 1; step <= steps; step++) {
+                long currentTimeSeconds = step * dtSeconds;
+                calculator.calculateStep(context, dtSeconds, currentTimeSeconds);
+                accumulator.recordStep(step, currentTimeSeconds, context.currentTemperatureByCell());
+
+                if (shouldPublishProgress(step, steps, reportEverySteps)) {
+                    publishProgress(progressListener, step, steps, currentTimeSeconds);
+                }
+            }
+
+            SimulationDefinitionCollector definitionCollector = new SimulationDefinitionCollector(simulationCase);
+            SimulationDefinition definition = definitionCollector.definition();
+            RecordingResult recording = accumulator.build();
+            SimulationMetadata metadata = metadataCollector.metadata();
+            progressListener.onFinish();
+            return new SimulationResult(metadata, definition, recording);
+
+        } catch (Exception ex) {
+            progressListener.onError(ex);
+            throw ex;
         }
+    }
 
-        SimulationDefinitionCollector definitionCollector = new SimulationDefinitionCollector(simulationCase);
-        SimulationDefinition definition = definitionCollector.definition();
-        RecordingResult recording = accumulator.build();
-        SimulationMetadata metadata = metadataCollector.metadata();
-        return new SimulationResult(metadata, definition, recording);
+    private static int computeReportEverySteps(int steps, int targetUpdates) {
+        return Math.max(1, steps / targetUpdates);
+    }
+
+    private static boolean shouldPublishProgress(
+            int step,
+            int totalSteps,
+            int reportEverySteps) {
+        return step == totalSteps || step % reportEverySteps == 0;
+    }
+
+    private static void publishProgress(
+            SimulationProgressListener progressListener,
+            int step,
+            int totalSteps,
+            long currentTimeSeconds) {
+
+        double percent = totalSteps == 0
+                ? 100.0
+                : (step * 100.0) / totalSteps;
+
+        progressListener.onProgress(
+                new SimulationProgress(step, totalSteps, currentTimeSeconds, percent));
     }
 }

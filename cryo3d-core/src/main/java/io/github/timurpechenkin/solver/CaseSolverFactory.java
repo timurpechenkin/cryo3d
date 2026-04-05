@@ -6,6 +6,7 @@ import io.github.timurpechenkin.solver.calculator.StepCalculator;
 import io.github.timurpechenkin.solver.calculator.StepCalculatorRegistry;
 import io.github.timurpechenkin.solver.context.CaseContextFactory;
 import io.github.timurpechenkin.solver.context.CaseContextFactoryRegistry;
+import io.github.timurpechenkin.solver.progress.SimulationProgressListener;
 
 public final class CaseSolverFactory {
     private final StepCalculatorRegistry stepCalculatorRegistry = new StepCalculatorRegistry();
@@ -14,10 +15,11 @@ public final class CaseSolverFactory {
     public CaseSolverFactory() {
     }
 
-    public CaseSolver create(SimulationCase simulationCase) {
+    public CaseSolver create(SimulationCase simulationCase,
+            SimulationProgressListener progressListener, int targetProgressUpdates) {
         CaseConfig config = simulationCase.config();
         StepCalculator calculator = stepCalculatorRegistry.get(config.stepCalculatorKey());
         CaseContextFactory contextFactory = contextFactoryRegistry.get(config.materialModelKey());
-        return new DefaultCaseSolver(calculator, contextFactory);
+        return new DefaultCaseSolver(calculator, contextFactory, progressListener, targetProgressUpdates);
     }
 }
