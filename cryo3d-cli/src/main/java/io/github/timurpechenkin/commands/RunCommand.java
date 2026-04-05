@@ -1,24 +1,11 @@
 package io.github.timurpechenkin.commands;
 
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
-import io.github.timurpechenkin.casefile.CaseLoader;
-import io.github.timurpechenkin.casefile.CaseResolver;
-import io.github.timurpechenkin.casefile.CaseValidator;
-import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
-import io.github.timurpechenkin.casefile.validation.ValidationError;
-import io.github.timurpechenkin.casefile.validation.ValidationResult;
-import io.github.timurpechenkin.domain.SimulationCase;
-import io.github.timurpechenkin.domain.config.NumberFormat;
-import io.github.timurpechenkin.output.OutputWriter;
-import io.github.timurpechenkin.progress.ConsoleProgressListener;
-import io.github.timurpechenkin.solver.CaseSolver;
-import io.github.timurpechenkin.solver.CaseSolverFactory;
-import io.github.timurpechenkin.solver.SimulationResult;
-import io.github.timurpechenkin.solver.recording.RecordingResult;
-import io.github.timurpechenkin.time.TimeFormat;
+import io.github.timurpechenkin.app.DefaultSimulationRunService;
+import io.github.timurpechenkin.app.RunStatus;
+import io.github.timurpechenkin.app.SimulationRunReport;
+import io.github.timurpechenkin.app.SimulationRunService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -31,47 +18,26 @@ public class RunCommand implements Runnable {
     @Option(names = { "-o", "--out" }, required = true, description = "Output directory")
     private Path outDir;
 
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-
     @Override
     public void run() {
-        try {
-            CaseLoader loader = new CaseLoader();
-            SimulationCaseDto caseDto = loader.load(casePath);
+        SimulationRunService runService = new DefaultSimulationRunService();
+        SimulationRunReport report = runService.run(casePath, outDir);
 
-            CaseValidator validator = new CaseValidator();
-            ValidationResult validation = validator.validate(caseDto);
-            if (!validation.isOk()) {
-                System.out.println("ERROR: case is invalid:");
-                for (ValidationError error : validation.errors()) {
-                    System.out.println("- " + error.path() + ": " + error.message());
-                }
-                System.exit(2);
-                return;
-            }
-
-            CaseResolver resolver = new CaseResolver();
-            SimulationCase simulationCase = resolver.resolve(caseDto);
-
-            OutputWriter writer = new OutputWriter(outDir);
-            String caseName = simulationCase.caseName() + "_" + formatter.format(LocalDateTime.now());
-
-            writer.writeSummary(simulationCase, caseName);
-            System.out.println("OK: wrote summary for " + simulationCase.caseName());
-
-            CaseSolver solver = new CaseSolverFactory().create(simulationCase, new ConsoleProgressListener(), 100);
-            SimulationResult result = solver.solve(simulationCase);
-            RecordingResult recording = result.recording();
-
-            TimeFormat timeFormat = result.metadata().timeFormat();
-            NumberFormat numberFormat = result.metadata().numberFormat();
-            writer.writeResult(recording, caseName, timeFormat, numberFormat);
-            System.out.println("OK: wrote result for " + simulationCase.caseName());
-
-        } catch (Exception ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-            System.exit(2);
+        if (report.status() == RunStatus.SUCCESS) {
+            System.out.println("OK: processed " + report.casePath());
+            return;
         }
+
+        if (report.status() == RunStatus.VALIDATION_FAILED) {
+            System.out.println("ERROR: case is invalid:");
+            report.validationErrors()
+                    .forEach(error -> System.out.println("- " + error.path() + ": " + error.message()));
+            System.exit(2);
+            return;
+        }
+
+        System.out.println("ERROR: " + report.errorMessage());
+        System.exit(2);
     }
 
 }

@@ -5,8 +5,6 @@ import io.github.timurpechenkin.solver.progress.SimulationProgressListener;
 
 public class ConsoleProgressListener implements SimulationProgressListener {
 
-    private int lastPrintedPercent = -1;
-
     @Override
     public void onStart(int totalSteps) {
         System.out.println("Simulation started. Total steps: " + totalSteps);
@@ -15,11 +13,8 @@ public class ConsoleProgressListener implements SimulationProgressListener {
     @Override
     public void onProgress(SimulationProgress progress) {
         int percent = (int) progress.percent();
-        if (percent != lastPrintedPercent) {
-            System.out.print("\rProgress: " + percent + "% (" +
-                    progress.currentStep() + "/" + progress.totalSteps() + ")");
-            lastPrintedPercent = percent;
-        }
+        System.out.print("\rProgress: " + percent + "% (" +
+                progress.currentStep() + "/" + progress.totalSteps() + ")");
     }
 
     @Override

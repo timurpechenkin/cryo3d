@@ -1,4 +1,4 @@
-caseName: 'main'
+caseName: 'main_15'
 
 config:
     stepCalculatorKey: 'ExplicitStefanEnthalpy'
@@ -17,18 +17,12 @@ grid:
     axes:
         X:
             - from: 0.0
-              to: 30.0
+              to: 15.0
               step: 0.5
-            - from: 30.0
-              to: 80.0
-              step: 5.0
         Y:
             - from: 0.0
-              to: 30.0
+              to: 15.0
               step: 0.5
-            - from: 30.0
-              to: 80.0
-              step: 5.0
         Z:
             - from: 0.0
               to: 1.0
@@ -298,15 +292,15 @@ profiles:
     - name: 'line_Y_min'
       saveStep: 100000
       pointA: [0.0, 0.0, 0.0]
-      pointB: [80.0, 0.0, 0.0]
+      pointB: [15.0, 0.0, 0.0]
     - name: 'line_X_min'
       saveStep: 100000
       pointA: [0.0, 0.0, 0.0]
-      pointB: [0.0, 80.0, 0.0]
+      pointB: [0.0, 15.0, 0.0]
     - name: 'line_Y_5'
       saveStep: 100000
       pointA: [0.0, 5.0, 0.0]
-      pointB: [80.0, 5.0, 0.0]
+      pointB: [15.0, 5.0, 0.0]
 
 samplePoints:
     - name: 'center'
