@@ -79,7 +79,7 @@ public class OutputWriter {
         Path pointDir = resultDir.resolve("points");
         for (SamplePointSeries samplePointSeries : result.pointSeries()) {
             SamplePoint samplePoint = samplePointSeries.samplePoint();
-            pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePoint, samplePointSeries.temperatureFrames(),
+            pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePointSeries.temperatureFrames(),
                     samplePoint.name() + "_temperature", timeFormat, numberFormat);
         }
 

@@ -78,7 +78,7 @@ boundaryConditions:
                 DECEMBER: 0
         bc_climate:
             type: THIRD_KIND
-            ambientTemperature:
+            heatTransferCoefficient:
                 JANUARY: 1.1
                 FEBRUARY: 1.1
                 MARCH: 1.1
@@ -91,7 +91,7 @@ boundaryConditions:
                 OCTOBER: 1.1
                 NOVEMBER: 1.1
                 DECEMBER: 1.1
-            heatTransferCoefficient:
+            ambientTemperature:
                 JANUARY: -19.8
                 FEBRUARY: -19.3
                 MARCH: -15.1
