@@ -28,3 +28,6 @@ replay_pid*
 
 # Project specific
 results/
+case*
+cases/
+cases_old/

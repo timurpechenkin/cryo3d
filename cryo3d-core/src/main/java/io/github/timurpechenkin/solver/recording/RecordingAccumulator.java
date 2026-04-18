@@ -41,7 +41,7 @@ public final class RecordingAccumulator {
     private final int[] profileStep;
     private final int[] pointStep;
 
-    private final TemperatureFrame1D[][] pointTemperatureFrames;
+    private final TemperatureFrame0D[][] pointTemperatureFrames;
     private final TemperatureFrame2D[][] profileTemperatureFrames;
 
     /**
@@ -89,10 +89,10 @@ public final class RecordingAccumulator {
             profileTemperatureFrames[i] = new TemperatureFrame2D[frameCount];
         }
 
-        this.pointTemperatureFrames = new TemperatureFrame1D[samplePoints.size()][];
+        this.pointTemperatureFrames = new TemperatureFrame0D[samplePoints.size()][];
         for (int i = 0; i < pointTemperatureFrames.length; i++) {
             int frameCount = calculateFrameCount(steps, pointSaveSteps[i]);
-            pointTemperatureFrames[i] = new TemperatureFrame1D[frameCount];
+            pointTemperatureFrames[i] = new TemperatureFrame0D[frameCount];
         }
     }
 
@@ -143,7 +143,7 @@ public final class RecordingAccumulator {
                 SamplePoint point = samplePoints.get(p);
                 int cellIndex = point.cellIndex();
                 double temperature = temperatureCByCell[cellIndex];
-                pointTemperatureFrames[p][actualPointStep] = new TemperatureFrame1D(temperature, timeSeconds);
+                pointTemperatureFrames[p][actualPointStep] = new TemperatureFrame0D(temperature, timeSeconds);
             }
         }
 
@@ -177,7 +177,7 @@ public final class RecordingAccumulator {
     public RecordingResult build() {
         List<SamplePointSeries> pointSeries = new ArrayList<>(samplePoints.size());
         for (int p = 0; p < samplePoints.size(); p++) {
-            TemperatureFrame1D[] temperatureFrames = pointTemperatureFrames[p];
+            TemperatureFrame0D[] temperatureFrames = pointTemperatureFrames[p];
             pointSeries.add(new SamplePointSeries(
                     samplePoints.get(p),
                     temperatureFrames));

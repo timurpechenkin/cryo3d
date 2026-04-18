@@ -14,6 +14,8 @@ import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.dto.common.Field;
 import io.github.timurpechenkin.casefile.dto.common.Rule;
 import io.github.timurpechenkin.casefile.dto.grid.Segment;
+import io.github.timurpechenkin.casefile.dto.recording.PointDto;
+import io.github.timurpechenkin.casefile.dto.recording.ProfileDto;
 import io.github.timurpechenkin.casefile.dto.selector.BoxSelector;
 import io.github.timurpechenkin.casefile.dto.selector.RevolutionSelector;
 import io.github.timurpechenkin.casefile.dto.selector.Selector;
@@ -22,6 +24,7 @@ import io.github.timurpechenkin.casefile.dto.temperature.TemperatureDefinition;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Face;
+import io.github.timurpechenkin.geometry.Point3D;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -228,6 +231,14 @@ public final class CaseValidator {
             }
         }
 
+        // 7) Проверка корректности профилей
+        if (simulationCase.profiles() != null && simulationCase.profiles().size() > 0) {
+            for (int i = 0; i < simulationCase.profiles().size(); i++) {
+                ProfileDto profileDto = simulationCase.profiles().get(i);
+                validateProfile(result, profileDto, i);
+            }
+        }
+
         return result;
     }
 
@@ -301,5 +312,88 @@ public final class CaseValidator {
         if (max[2] < min[2]) {
             result.add(path, "top fae must be hier then bottom face");
         }
+    }
+
+    /**
+     * Проверяет геометрию профиля.
+     *
+     * <p>
+     * Допустимый профиль должен удовлетворять следующим условиям:
+     * <ul>
+     * <li>точки A и B не совпадают;</li>
+     * <li>отрезок A-B должен быть параллелен одной из осей 3D-сетки;</li>
+     * <li>отрезок A-B не должен быть параллелен {@code axisParallel};</li>
+     * <li>координата точек A и B по оси {@code axisParallel} должна совпадать.</li>
+     * </ul>
+     */
+    private void validateProfile(ValidationResult result, ProfileDto profileDto, int i) {
+        Axis3D axisParallel = profileDto.axisParallel();
+        Point3D pointA = toPoint3d(profileDto.pointA());
+        Point3D pointB = toPoint3d(profileDto.pointB());
+        boolean sameX = pointA.xScaled() == pointB.xScaled();
+        boolean sameY = pointA.yScaled() == pointB.yScaled();
+        boolean sameZ = pointA.zScaled() == pointB.zScaled();
+
+        if (sameX && sameY && sameZ) {
+            result.add("profiles[" + i + "]", "profile points A and B must not coincide");
+        }
+
+        int differentAxes = 0;
+        if (!sameX)
+            differentAxes++;
+        if (!sameY)
+            differentAxes++;
+        if (!sameZ)
+            differentAxes++;
+
+        if (differentAxes != 1) {
+            result.add("profiles[" + i + "]", "profile segment A-B must be parallel to exactly one 3D axis");
+        }
+
+        if (coordinateScaled(pointA, axisParallel) != coordinateScaled(pointB, axisParallel)) {
+            result.add("profiles[" + i + "]", "profile points A and B must have the same coordinate on axisParallel");
+        }
+
+        Axis3D axisW = resolveAxisWUnchecked(pointA, pointB);
+        if (axisW == axisParallel) {
+            result.add("profiles[" + i + "]", "profile segment A-B must not be parallel to axisParallel");
+        }
+    }
+
+    /**
+     * Определяет ось, по которой координаты точек A и B различаются.
+     *
+     * <p>
+     * Метод предполагает, что точки A и B уже прошли базовую валидацию.
+     */
+    private Axis3D resolveAxisWUnchecked(Point3D pointA, Point3D pointB) {
+        if (pointA.xScaled() != pointB.xScaled()) {
+            return Axis3D.X;
+        }
+        if (pointA.yScaled() != pointB.yScaled()) {
+            return Axis3D.Y;
+        }
+        if (pointA.zScaled() != pointB.zScaled()) {
+            return Axis3D.Z;
+        }
+        throw new IllegalArgumentException("Profile points A and B must not coincide");
+    }
+
+    /**
+     * Возвращает координату точки по выбранной оси.
+     */
+    private int coordinateScaled(Point3D point, Axis3D axis) {
+        return switch (axis) {
+            case X -> point.xScaled();
+            case Y -> point.yScaled();
+            case Z -> point.zScaled();
+        };
+    }
+
+    private Point3D toPoint3d(PointDto dto) {
+        int xScaled = metersToScaled(dto.x());
+        int yScaled = metersToScaled(dto.y());
+        int zScaled = metersToScaled(dto.z());
+        return new Point3D(xScaled, yScaled, zScaled);
     }
 }

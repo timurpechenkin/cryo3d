@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import io.github.timurpechenkin.domain.config.NumberFormat;
-import io.github.timurpechenkin.solver.recording.TemperatureFrame1D;
+import io.github.timurpechenkin.solver.recording.TemperatureFrame0D;
 import io.github.timurpechenkin.time.TimeFormat;
 
 public class PointCsvWriter {
@@ -16,7 +16,7 @@ public class PointCsvWriter {
 
     public void writeTemperaturePointCsv(
             Path outDir,
-            TemperatureFrame1D[] temperatureFrames,
+            TemperatureFrame0D[] temperatureFrames,
             String pointName,
             TimeFormat timeFormat,
             NumberFormat numberFormat) throws IOException {
@@ -26,7 +26,7 @@ public class PointCsvWriter {
 
         try (BufferedWriter w = Csv.writer(file)) {
             w.write(timeFormat.name());
-            for (TemperatureFrame1D frame : temperatureFrames) {
+            for (TemperatureFrame0D frame : temperatureFrames) {
                 w.write(",");
                 w.write(format(frame.seconds(), timeFormat));
             }
@@ -34,7 +34,7 @@ public class PointCsvWriter {
 
             w.write("temperature");
             for (int i = 0; i < temperatureFrames.length; i++) {
-                TemperatureFrame1D frame = temperatureFrames[i];
+                TemperatureFrame0D frame = temperatureFrames[i];
                 w.write(",");
                 w.write(safeFormatTemperature(
                         frame.temperature(),

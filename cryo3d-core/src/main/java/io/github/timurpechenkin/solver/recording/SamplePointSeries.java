@@ -10,6 +10,6 @@ import io.github.timurpechenkin.domain.recording.SamplePoint;
  * @param temperatureFrames записи температуры по шагам, °C
  */
 public record SamplePointSeries(
-                SamplePoint samplePoint,
-                TemperatureFrame1D[] temperatureFrames) {
+        SamplePoint samplePoint,
+        TemperatureFrame0D[] temperatureFrames) {
 }

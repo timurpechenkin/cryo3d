@@ -18,6 +18,7 @@ import io.github.timurpechenkin.casefile.dto.time.TimeSettingsDto;
 import io.github.timurpechenkin.casefile.resolve.BoundaryConditionDiscretizer;
 import io.github.timurpechenkin.casefile.resolve.GridResolver;
 import io.github.timurpechenkin.casefile.resolve.MaterialDiscretizer;
+import io.github.timurpechenkin.casefile.resolve.OrthogonalProfileDiscretizer;
 import io.github.timurpechenkin.casefile.resolve.ProfileDiscretizer;
 import io.github.timurpechenkin.casefile.resolve.TemperatureDiscretizer;
 import io.github.timurpechenkin.domain.SimulationCase;
@@ -43,7 +44,7 @@ public final class CaseResolver {
     private final MaterialDiscretizer materialDiscretizer = new MaterialDiscretizer();
     private final TemperatureDiscretizer temperatureDiscretizer = new TemperatureDiscretizer();
     private final BoundaryConditionDiscretizer bcDiscretizer = new BoundaryConditionDiscretizer();
-    private final ProfileDiscretizer profileDiscretizer = new ProfileDiscretizer();
+    private final ProfileDiscretizer profileDiscretizer = new OrthogonalProfileDiscretizer();
 
     public SimulationCase resolve(SimulationCaseDto dto) {
 

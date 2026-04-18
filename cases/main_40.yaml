@@ -10,7 +10,7 @@ config:
         
 time:
     startDate: '2000-01-01T00:00:00'
-    endDate: '2040-01-01T00:00:00'
+    endDate: '2050-01-01T00:00:00'
     dtSeconds: 3600 # шаг расчёта (сек)
 
 grid:
@@ -318,3 +318,21 @@ samplePoints:
     - name: 'middle_top'
       saveStep: 720
       point: [0.25, 0.25, 36.25]
+    - name: 'middle_bottom_2'
+      saveStep: 720
+      point: [0.25, 0.25, 37.75]
+    - name: 'middle_bottom_3'
+      saveStep: 720
+      point: [0.25, 0.25, 38.25]
+    - name: 'middle_bottom_4'
+      saveStep: 720
+      point: [0.25, 0.25, 38.75]
+    - name: 'middle_bottom_5'
+      saveStep: 720
+      point: [0.25, 0.25, 39.25]
+    - name: 'middle_bottom_6'
+      saveStep: 720
+      point: [0.25, 0.25, 39.75]
+    - name: 'middle_bottom_7'
+      saveStep: 720
+      point: [0.25, 0.25, 40.25]
