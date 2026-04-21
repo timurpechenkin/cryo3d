@@ -71,12 +71,23 @@ public class OutputWriter {
         Path profileDir = resultDir.resolve("profiles");
         for (ProfileSeries profileSeries : result.profileSeries()) {
             Profile profile = profileSeries.profile();
+            Grid2D grid2d = profile.grid2d();
             Path specialProfileDir = profileDir.resolve(profile.name());
             for (TemperatureFrame2D temperatureFrames : profileSeries.temperatureFrames()) {
                 double[] temperatureCByCell = temperatureFrames.temperatureCByCell();
                 String time = format(temperatureFrames.seconds(), timeFormat);
                 profileCsvWriter.writeTemperatureProfileCsv(specialProfileDir, profile, temperatureCByCell,
                         profile.name() + "_temperature_" + time, numberFormat);
+
+                // Рендер профилей
+                ProfileRenderSettings settings = ProfileRenderSettings.defaults(-10.0, 10.0);
+                ProfilePngWriter writer = new ProfilePngWriter();
+                writer.write(
+                        specialProfileDir.resolve(profileSeries.profile().name() + ".png"),
+                        profileSeries,
+                        temperatureFrames,
+                        settings,
+                        grid2d);
             }
         }
 
@@ -87,19 +98,5 @@ public class OutputWriter {
             pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePointSeries.temperatureFrames(),
                     samplePoint.name() + "_temperature", timeFormat, numberFormat);
         }
-
-        // Рендер профилей
-        ProfileSeries profileSeries = result.profileSeries().get(0);
-        Grid2D grid2d = profileSeries.profile().grid2d();
-        TemperatureFrame2D frame = profileSeries.temperatureFrames()[0];
-        ProfileRenderSettings settings = ProfileRenderSettings.defaults(-10.0, 10.0);
-        ProfilePngWriter writer = new ProfilePngWriter();
-        writer.write(
-                profileDir.resolve(profileSeries.profile().name() + ".png"),
-                profileSeries,
-                frame,
-                settings,
-                grid2d);
-
     }
 }

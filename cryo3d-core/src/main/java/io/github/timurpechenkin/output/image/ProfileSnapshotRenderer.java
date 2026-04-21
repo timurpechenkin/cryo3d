@@ -358,7 +358,7 @@ public final class ProfileSnapshotRenderer {
     }
 
     private String formatMeters(double meters) {
-        return String.format(Locale.US, "%.3f", meters);
+        return String.format(Locale.US, "%.2f", meters);
     }
 
     private String formatTemperature(double valueC) {
