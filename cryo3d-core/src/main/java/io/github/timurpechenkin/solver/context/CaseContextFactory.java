@@ -1,6 +1,6 @@
 package io.github.timurpechenkin.solver.context;
 
-import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.SimulationModel;
 
 /**
  * Фабрика начального runtime-состояния расчёта.
@@ -23,8 +23,8 @@ public interface CaseContextFactory {
     /**
      * Создаёт начальное runtime-состояние расчёта.
      *
-     * @param simulationCase расчётный случай
+     * @param model описание модели
      * @return готовый к использованию контекст расчёта
      */
-    CaseContext create(SimulationCase simulationCase);
+    CaseContext create(SimulationModel model);
 }

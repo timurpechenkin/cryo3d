@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import io.github.timurpechenkin.domain.SimulationCase;
 import io.github.timurpechenkin.domain.recording.Profile;
+import io.github.timurpechenkin.domain.recording.RecordingSettings;
 import io.github.timurpechenkin.domain.recording.SamplePoint;
 
 /**
@@ -47,18 +47,18 @@ public final class RecordingAccumulator {
     /**
      * Создаёт накопитель результата.
      *
-     * @param simulationCase расчётный случай
-     * @param steps          число шагов в расчёте состояний
+     * @param settings настройки сбора данных
+     * @param steps    число шагов в расчёте состояний
      * @throws IllegalArgumentException если {@code steps <= 0}
      */
-    public RecordingAccumulator(SimulationCase simulationCase, int steps) {
-        Objects.requireNonNull(simulationCase, "simulationCase");
+    public RecordingAccumulator(RecordingSettings settings, int steps) {
+        Objects.requireNonNull(settings, "settings");
         if (steps <= 0) {
             throw new IllegalArgumentException("totalSteps must be > 0");
         }
         this.maxStepIndex = steps;
-        this.samplePoints = List.copyOf(simulationCase.samplePoints());
-        this.profiles = List.copyOf(simulationCase.profiles());
+        this.samplePoints = List.copyOf(settings.samplePoints());
+        this.profiles = List.copyOf(settings.profiles());
 
         this.profileSaveSteps = new int[profiles.size()];
         this.profileStep = new int[profiles.size()];

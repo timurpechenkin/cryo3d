@@ -7,14 +7,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.SimulationModel;
 import io.github.timurpechenkin.domain.bc.BoundaryCondition;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionField;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
+import io.github.timurpechenkin.domain.bc.BoundaryConditionSetup;
 import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
+import io.github.timurpechenkin.domain.material.MaterialSetup;
+import io.github.timurpechenkin.domain.metadata.CaseMetadata;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
+import io.github.timurpechenkin.domain.temperature.TemperatureSetup;
 import io.github.timurpechenkin.geometry.Axis3D;
 import io.github.timurpechenkin.geometry.Face;
 import io.github.timurpechenkin.output.SimulationSummary.BoundaryConditionStatus;
@@ -28,14 +33,16 @@ public final class SummaryCalculator {
     private SummaryCalculator() {
     }
 
-    public static SimulationSummary calculate(SimulationCase c) {
+    public static SimulationSummary calculate(SimulationCase simulationCase) {
+        CaseMetadata metadata = simulationCase.metadata();
+        SimulationModel c = simulationCase.model();
         GridStats gridStats = gridStats(c.grid());
-        MaterialStats materialStats = materialStats(c.materialField(), c.materialLibrary());
-        TemperatureStats temperatureStats = temperatureStats(c.temperatureField());
-        BoundaryConditionStatus bcStatus = bcStatus(c.bcField(), c.bcLibrary());
+        MaterialStats materialStats = materialStats(c.materialSetup());
+        TemperatureStats temperatureStats = temperatureStats(c.temperatureSetup());
+        BoundaryConditionStatus bcStatus = bcStatus(c.bcSetup());
 
         SimulationSummary summary = new SimulationSummary(
-                c.caseName(),
+                metadata.caseName(),
                 Instant.now(),
                 c.time(),
                 gridStats, materialStats,
@@ -54,7 +61,9 @@ public final class SummaryCalculator {
         return gridStats;
     }
 
-    private static MaterialStats materialStats(MaterialField field, MaterialLibrary lib) {
+    private static MaterialStats materialStats(MaterialSetup setup) {
+        MaterialField field = setup.field();
+        MaterialLibrary lib = setup.library();
         int[] matArr = field.materialIdByCell();
         long total = matArr.length;
 
@@ -77,7 +86,8 @@ public final class SummaryCalculator {
         return new MaterialStats(total, byName);
     }
 
-    private static TemperatureStats temperatureStats(TemperatureField field) {
+    private static TemperatureStats temperatureStats(TemperatureSetup setup) {
+        TemperatureField field = setup.field();
         double[] tempArr = field.temperatureCByCell();
         long total = tempArr.length;
         if (total == 0) {
@@ -116,7 +126,9 @@ public final class SummaryCalculator {
         return new TemperatureStats(total, min, max, avg, countsRounded);
     }
 
-    private static BoundaryConditionStatus bcStatus(BoundaryConditionField field, BoundaryConditionLibrary library) {
+    private static BoundaryConditionStatus bcStatus(BoundaryConditionSetup setup) {
+        BoundaryConditionField field = setup.field();
+        BoundaryConditionLibrary library = setup.library();
         EnumMap<Face, FaceBC> bcByFace = new EnumMap<>(Face.class);
         for (Face face : Face.values()) {
             int[] bcArr = field.raw(face);

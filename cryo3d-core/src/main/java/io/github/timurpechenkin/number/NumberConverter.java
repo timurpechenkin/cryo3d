@@ -2,7 +2,7 @@ package io.github.timurpechenkin.number;
 
 import java.math.BigDecimal;
 
-import io.github.timurpechenkin.domain.config.NumberFormat;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
 
 public final class NumberConverter {
 

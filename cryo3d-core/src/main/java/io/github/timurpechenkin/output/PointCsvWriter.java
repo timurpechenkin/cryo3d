@@ -7,7 +7,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import io.github.timurpechenkin.domain.config.NumberFormat;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame0D;
 import io.github.timurpechenkin.time.TimeFormat;
 

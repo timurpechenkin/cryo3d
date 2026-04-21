@@ -10,9 +10,10 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 import io.github.timurpechenkin.domain.SimulationCase;
-import io.github.timurpechenkin.domain.config.NumberFormat;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
+import io.github.timurpechenkin.domain.presentation.PresentationSettings;
 import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.domain.recording.SamplePoint;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
@@ -47,14 +48,15 @@ public class OutputWriter {
         Path file = startDir.resolve("summary.json");
         jsonMapper.writeValue(file.toFile(), summary);
 
-        TemperatureField temperatureField = c.temperatureField();
-        MaterialField materialField = c.materialField();
-        MaterialLibrary materialLibrary = c.materialLibrary();
-        for (Profile profile : c.profiles()) {
+        TemperatureField temperatureField = c.model().temperatureSetup().field();
+        MaterialField materialField = c.model().materialSetup().field();
+        MaterialLibrary materialLibrary = c.model().materialSetup().library();
+        PresentationSettings presentationSettings = c.presentation();
+        for (Profile profile : c.recording().profiles()) {
             profileCsvWriter.writeMaterialGridCsv(startDir, profile, materialField.materialIdByCell(),
                     materialLibrary, profile.name() + "_material_0");
             profileCsvWriter.writeTemperatureGridCsv(startDir, profile, temperatureField.temperatureCByCell(),
-                    profile.name() + "_temperature_0", c.config().numberFormat());
+                    profile.name() + "_temperature_0", presentationSettings.numberFormat());
         }
     }
 

@@ -34,14 +34,13 @@ import io.github.timurpechenkin.solver.recording.RecordingResult;
 public interface CaseSolver {
 
     /**
-     * Выполняет полный расчёт задачи.
+     * Выполняет полный расчёт задачи, для которой был создан.
      *
-     * @param simulationCase расчётный случай
      * @return результат расчёта, содержащий историю состояний системы
      * @throws NullPointerException     если {@code simulationCase == null}
      * @throws IllegalArgumentException если параметры задачи некорректны
      * @throws IllegalStateException    если расчёт не может быть выполнен
      *                                  из-за несогласованности данных
      */
-    SimulationResult solve(SimulationCase simulationCase);
+    SimulationResult solve();
 }

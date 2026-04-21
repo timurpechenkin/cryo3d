@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.domain.config;
+package io.github.timurpechenkin.domain.presentation;
 
 import java.math.RoundingMode;
 

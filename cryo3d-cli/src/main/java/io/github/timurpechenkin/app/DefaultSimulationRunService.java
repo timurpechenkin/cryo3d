@@ -11,7 +11,8 @@ import io.github.timurpechenkin.casefile.CaseValidator;
 import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.domain.SimulationCase;
-import io.github.timurpechenkin.domain.config.NumberFormat;
+import io.github.timurpechenkin.domain.metadata.CaseMetadata;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
 import io.github.timurpechenkin.output.OutputWriter;
 import io.github.timurpechenkin.progress.ConsoleProgressListener;
 import io.github.timurpechenkin.solver.CaseSolver;
@@ -44,21 +45,22 @@ public final class DefaultSimulationRunService implements SimulationRunService {
             }
 
             SimulationCase simulationCase = resolver.resolve(caseDto);
+            CaseMetadata metadata = simulationCase.metadata();
 
             OutputWriter writer = new OutputWriter(outDir);
-            String caseName = simulationCase.caseName() + "_" + formatter.format(LocalDateTime.now());
+            String caseName = metadata.caseName() + "_" + formatter.format(LocalDateTime.now());
 
             writer.writeSummary(simulationCase, caseName);
 
             CaseSolver solver = solverFactory.create(simulationCase, consoleProgressListener, targetProgressUpdates);
-            SimulationResult result = solver.solve(simulationCase);
+            SimulationResult result = solver.solve();
             RecordingResult recording = result.recording();
 
             TimeFormat timeFormat = result.metadata().timeFormat();
             NumberFormat numberFormat = result.metadata().numberFormat();
             writer.writeResult(recording, caseName, timeFormat, numberFormat);
 
-            return SimulationRunReport.success(casePath, simulationCase.caseName(), caseName);
+            return SimulationRunReport.success(casePath, metadata.caseName(), caseName);
 
         } catch (Exception ex) {
             return SimulationRunReport.failed(casePath, ex);

@@ -9,9 +9,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-import io.github.timurpechenkin.domain.config.NumberFormat;
 import io.github.timurpechenkin.domain.grid.Grid2D;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
 import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.geometry.Axis2D;
 

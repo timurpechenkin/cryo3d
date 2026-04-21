@@ -10,7 +10,7 @@ config:
         
 time:
     startDate: '2000-01-01T00:00:00'
-    endDate: '2100-01-01T00:00:00'
+    endDate: '2000-01-02T00:00:00'
     dtSeconds: 3600 # шаг расчёта (сек)
 
 grid:

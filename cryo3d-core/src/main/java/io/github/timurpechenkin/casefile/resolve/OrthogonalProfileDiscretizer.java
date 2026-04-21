@@ -88,7 +88,7 @@ public class OrthogonalProfileDiscretizer implements ProfileDiscretizer {
         AxisGrid hAxisGrid = grid3d.axis(axisParallel);
         Grid2D grid2d = buildGrid2d(wAxisGrid, hAxisGrid);
 
-        int[] cellIndex = buildCellIndex(grid3d, wPositions, axisW, axisParallel, axisFixed, fixedPosition);
+        int[] cellIndex = buildCellIndex(grid3d, grid2d, wPositions, axisW, axisParallel, axisFixed, fixedPosition);
 
         return new Profile(
                 name,
@@ -321,19 +321,20 @@ public class OrthogonalProfileDiscretizer implements ProfileDiscretizer {
      */
     private int[] buildCellIndex(
             Grid3D grid3d,
+            Grid2D grid2d,
             int[] wPositions,
             Axis3D axisW,
             Axis3D axisH,
             Axis3D axisFixed,
             int fixedPosition) {
 
-        int width = wPositions.length;
-        int height = grid3d.n(axisH);
+        int nW = grid2d.n(Axis2D.W);
+        int nH = grid2d.n(Axis2D.H);
 
-        int[] cellIndex = new int[width * height];
+        int[] cellIndex = new int[nW * nH];
 
-        for (int h = 0; h < height; h++) {
-            for (int w = 0; w < width; w++) {
+        for (int h = 0; h < nH; h++) {
+            for (int w = 0; w < nW; w++) {
                 int positionW = wPositions[w];
                 int positionH = h;
 
@@ -341,7 +342,7 @@ public class OrthogonalProfileDiscretizer implements ProfileDiscretizer {
                 int y = axisPosition(Axis3D.Y, axisW, positionW, axisH, positionH, axisFixed, fixedPosition);
                 int z = axisPosition(Axis3D.Z, axisW, positionW, axisH, positionH, axisFixed, fixedPosition);
 
-                int index2d = w + width * h;
+                int index2d = grid2d.index(w, h);
                 cellIndex[index2d] = grid3d.index(x, y, z);
             }
         }

@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.Objects;
 
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.SimulationModel;
+import io.github.timurpechenkin.domain.recording.RecordingSettings;
 import io.github.timurpechenkin.domain.time.TimeSettings;
 import io.github.timurpechenkin.solver.calculator.StepCalculator;
 import io.github.timurpechenkin.solver.context.CaseContext;
@@ -49,16 +51,19 @@ import io.github.timurpechenkin.solver.recording.RecordingResult;
  * финальное состояние в результат автоматически не добавляется.
  */
 public final class DefaultCaseSolver implements CaseSolver {
+    private final SimulationCase simulationCase;
     private final StepCalculator calculator;
     private final CaseContextFactory contextFactory;
     private final SimulationProgressListener progressListener;
     private final int targetProgressUpdates;
 
-    public DefaultCaseSolver(StepCalculator calculator, CaseContextFactory contextFactory,
+    public DefaultCaseSolver(SimulationCase simulationCase, StepCalculator calculator,
+            CaseContextFactory contextFactory,
             SimulationProgressListener progressListener, int targetProgressUpdates) {
         if (targetProgressUpdates <= 0) {
             throw new IllegalArgumentException("targetProgressUpdates must be > 0");
         }
+        this.simulationCase = Objects.requireNonNull(simulationCase, "simulationCase");
         this.calculator = Objects.requireNonNull(calculator, "calculator");
         this.contextFactory = Objects.requireNonNull(contextFactory, "contextFactory");
         this.progressListener = Objects.requireNonNull(progressListener, "progressListener");
@@ -66,11 +71,11 @@ public final class DefaultCaseSolver implements CaseSolver {
     }
 
     @Override
-    public SimulationResult solve(SimulationCase simulationCase) {
-        Objects.requireNonNull(simulationCase, "simulationCase");
-
-        CaseContext context = contextFactory.create(simulationCase);
-        TimeSettings time = simulationCase.time();
+    public SimulationResult solve() {
+        SimulationModel model = simulationCase.model();
+        RecordingSettings recordingSettings = simulationCase.recording();
+        TimeSettings time = model.time();
+        CaseContext context = contextFactory.create(model);
 
         long cellCountLong = context.grid().cellCount();
         if (cellCountLong > Integer.MAX_VALUE) {
@@ -89,7 +94,7 @@ public final class DefaultCaseSolver implements CaseSolver {
         int steps = (int) stepsLong;
         long dtSeconds = time.dtSeconds();
 
-        RecordingAccumulator accumulator = new RecordingAccumulator(simulationCase, steps);
+        RecordingAccumulator accumulator = new RecordingAccumulator(recordingSettings, steps);
         SimulationMetadataCollector metadataCollector = new SimulationMetadataCollector(simulationCase);
 
         try {

@@ -2,7 +2,9 @@ package io.github.timurpechenkin.solver.metadata;
 
 import java.time.Instant;
 import io.github.timurpechenkin.domain.SimulationCase;
-import io.github.timurpechenkin.domain.config.NumberFormat;
+import io.github.timurpechenkin.domain.metadata.CaseMetadata;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
+import io.github.timurpechenkin.domain.presentation.PresentationSettings;
 import io.github.timurpechenkin.time.TimeFormat;
 
 public class SimulationMetadataCollector {
@@ -12,10 +14,12 @@ public class SimulationMetadataCollector {
     private NumberFormat numberFormat;
 
     public SimulationMetadataCollector(SimulationCase simulationCase) {
+        CaseMetadata metadata = simulationCase.metadata();
+        PresentationSettings presentationSettings = simulationCase.presentation();
         this.calculationStartedUtc = Instant.now();
-        this.caseName = simulationCase.caseName();
-        this.timeFormat = simulationCase.config().timeFormat();
-        this.numberFormat = simulationCase.config().numberFormat();
+        this.caseName = metadata.caseName();
+        this.timeFormat = presentationSettings.timeFormat();
+        this.numberFormat = presentationSettings.numberFormat();
     }
 
     public SimulationMetadata metadata() {

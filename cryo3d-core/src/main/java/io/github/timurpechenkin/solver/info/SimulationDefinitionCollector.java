@@ -3,6 +3,7 @@ package io.github.timurpechenkin.solver.info;
 import java.time.LocalDateTime;
 
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.SimulationModel;
 import io.github.timurpechenkin.domain.grid.Grid3D;
 import io.github.timurpechenkin.domain.time.TimeSettings;
 import io.github.timurpechenkin.geometry.Axis3D;
@@ -17,12 +18,13 @@ public class SimulationDefinitionCollector {
     private double sizeZMeters;
 
     public SimulationDefinitionCollector(SimulationCase simulationCase) {
-        TimeSettings time = simulationCase.time();
+        TimeSettings time = simulationCase.model().time();
         this.dtSeconds = time.dtSeconds();
         this.startDate = time.startDate();
         this.endDate = time.endDate();
 
-        Grid3D grid = simulationCase.grid();
+        SimulationModel model = simulationCase.model();
+        Grid3D grid = model.grid();
         this.cellCount = grid.cellCount();
         this.sizeXMeters = grid.axis(Axis3D.X).sizeMeters();
         this.sizeYMeters = grid.axis(Axis3D.Y).sizeMeters();

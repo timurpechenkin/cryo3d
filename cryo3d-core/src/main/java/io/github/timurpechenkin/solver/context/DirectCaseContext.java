@@ -6,6 +6,7 @@ import java.util.EnumMap;
 import java.util.Objects;
 
 import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.SimulationModel;
 import io.github.timurpechenkin.domain.bc.BoundaryCondition;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionType;
@@ -105,16 +106,16 @@ public class DirectCaseContext implements CaseContext {
      * @throws IllegalStateException если размеры полей не совпадают
      *                               с размером расчётной сетки
      */
-    public DirectCaseContext(SimulationCase simulationCase) {
-        Objects.requireNonNull(simulationCase, "simulationCase");
+    public DirectCaseContext(SimulationModel simulationModel) {
+        Objects.requireNonNull(simulationModel, "simulationModel");
 
-        this.startDate = requireStartDate(simulationCase);
+        this.startDate = requireStartDate(simulationModel);
         this.currentDate = startDate;
-        this.grid = requireGrid(simulationCase);
+        this.grid = requireGrid(simulationModel);
         this.cellCount = resolveCellCount(grid);
 
-        this.materialIdByCell = requireMaterialIds(simulationCase);
-        this.temperatureCByCell = requireTemperatureField(simulationCase);
+        this.materialIdByCell = requireMaterialIds(simulationModel);
+        this.temperatureCByCell = requireTemperatureField(simulationModel);
 
         validateCellArrayLengths();
 
@@ -127,23 +128,23 @@ public class DirectCaseContext implements CaseContext {
 
         this.typeByCellFaceMap = new EnumMap<>(Face.class);
         this.bcIdByFaceMap = new EnumMap<>(Face.class);
-        this.bcLibrary = requireBoundaryConditionLibrary(simulationCase);
+        this.bcLibrary = requireBoundaryConditionLibrary(simulationModel);
 
         this.cellSideByAxisMap = new EnumMap<>(Axis3D.class);
         this.areaNormalByAxisMap = new EnumMap<>(Axis3D.class);
         this.volumeByCell = new double[cellCount];
 
-        initMaterialCache(simulationCase);
-        initBoundaryConditions(simulationCase);
+        initMaterialCache(simulationModel);
+        initBoundaryConditions(simulationModel);
         initGeometry();
     }
 
-    private static LocalDateTime requireStartDate(SimulationCase simulationCase) {
-        return Objects.requireNonNull(simulationCase.time().startDate(), "startDate");
+    private static LocalDateTime requireStartDate(SimulationModel simulationModel) {
+        return Objects.requireNonNull(simulationModel.time().startDate(), "startDate");
     }
 
-    private static Grid3D requireGrid(SimulationCase simulationCase) {
-        return Objects.requireNonNull(simulationCase.grid(), "grid");
+    private static Grid3D requireGrid(SimulationModel simulationModel) {
+        return Objects.requireNonNull(simulationModel.grid(), "grid");
     }
 
     private static int resolveCellCount(Grid3D grid) {
@@ -155,19 +156,20 @@ public class DirectCaseContext implements CaseContext {
         return (int) cellCountLong;
     }
 
-    private static int[] requireMaterialIds(SimulationCase simulationCase) {
-        MaterialField materialField = Objects.requireNonNull(simulationCase.materialField(), "materialField");
+    private static int[] requireMaterialIds(SimulationModel simulationModel) {
+        MaterialField materialField = Objects.requireNonNull(simulationModel.materialSetup().field(),
+                "materialSetup().field()");
         return Objects.requireNonNull(materialField.materialIdByCell(), "materialIdByCell");
     }
 
-    private static double[] requireTemperatureField(SimulationCase simulationCase) {
-        TemperatureField temperatureField = Objects.requireNonNull(simulationCase.temperatureField(),
-                "temperatureField");
+    private static double[] requireTemperatureField(SimulationModel simulationModel) {
+        TemperatureField temperatureField = Objects.requireNonNull(simulationModel.temperatureSetup().field(),
+                "temperatureSetup().field()");
         return Objects.requireNonNull(temperatureField.temperatureCByCell(), "temperatureCByCell");
     }
 
-    private static BoundaryConditionLibrary requireBoundaryConditionLibrary(SimulationCase simulationCase) {
-        return Objects.requireNonNull(simulationCase.bcLibrary(), "bcLibrary");
+    private static BoundaryConditionLibrary requireBoundaryConditionLibrary(SimulationModel simulationModel) {
+        return Objects.requireNonNull(simulationModel.bcSetup().library(), "bcSetup().library()");
     }
 
     private void validateCellArrayLengths() {
@@ -182,8 +184,9 @@ public class DirectCaseContext implements CaseContext {
         }
     }
 
-    private void initMaterialCache(SimulationCase simulationCase) {
-        MaterialLibrary materialLibrary = Objects.requireNonNull(simulationCase.materialLibrary(), "materialLibrary");
+    private void initMaterialCache(SimulationModel simulationModel) {
+        MaterialLibrary materialLibrary = Objects.requireNonNull(simulationModel.materialSetup().library(),
+                "materialSetup().library()");
 
         for (int i = 0; i < cellCount; i++) {
             int materialId = materialIdByCell[i];
@@ -198,11 +201,11 @@ public class DirectCaseContext implements CaseContext {
         }
     }
 
-    private void initBoundaryConditions(SimulationCase simulationCase) {
-        Objects.requireNonNull(simulationCase.bcField(), "bcField");
+    private void initBoundaryConditions(SimulationModel simulationModel) {
+        Objects.requireNonNull(simulationModel.bcSetup().field(), "bcSetup().field()");
 
         for (Face face : Face.values()) {
-            int[] bcIdByFaceCell = simulationCase.bcField().raw(face);
+            int[] bcIdByFaceCell = simulationModel.bcSetup().field().raw(face);
             validateBoundaryConditionArrayLength(face, bcIdByFaceCell);
 
             BoundaryConditionType[] typeByFaceCell = new BoundaryConditionType[bcIdByFaceCell.length];

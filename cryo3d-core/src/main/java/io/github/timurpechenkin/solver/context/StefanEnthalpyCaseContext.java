@@ -5,7 +5,7 @@ import java.time.Month;
 import java.util.EnumMap;
 import java.util.Objects;
 
-import io.github.timurpechenkin.domain.SimulationCase;
+import io.github.timurpechenkin.domain.SimulationModel;
 import io.github.timurpechenkin.domain.bc.BoundaryCondition;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionLibrary;
 import io.github.timurpechenkin.domain.bc.BoundaryConditionType;
@@ -66,7 +66,7 @@ public final class StefanEnthalpyCaseContext implements CaseContext {
     private final EnumMap<Axis3D, double[]> areaNormalByAxisMap = new EnumMap<>(Axis3D.class);
     private final double[] volumeByCell;
 
-    public StefanEnthalpyCaseContext(SimulationCase simulationCase) {
+    public StefanEnthalpyCaseContext(SimulationModel simulationCase) {
         Objects.requireNonNull(simulationCase, "simulationCase");
 
         this.startDate = requireStartDate(simulationCase);
@@ -100,11 +100,11 @@ public final class StefanEnthalpyCaseContext implements CaseContext {
         }
     }
 
-    private static LocalDateTime requireStartDate(SimulationCase simulationCase) {
+    private static LocalDateTime requireStartDate(SimulationModel simulationCase) {
         return Objects.requireNonNull(simulationCase.time().startDate(), "startDate");
     }
 
-    private static Grid3D requireGrid(SimulationCase simulationCase) {
+    private static Grid3D requireGrid(SimulationModel simulationCase) {
         return Objects.requireNonNull(simulationCase.grid(), "grid");
     }
 
@@ -117,19 +117,20 @@ public final class StefanEnthalpyCaseContext implements CaseContext {
         return (int) cellCountLong;
     }
 
-    private static int[] requireMaterialIds(SimulationCase simulationCase) {
-        MaterialField materialField = Objects.requireNonNull(simulationCase.materialField(), "materialField");
+    private static int[] requireMaterialIds(SimulationModel simulationCase) {
+        MaterialField materialField = Objects.requireNonNull(simulationCase.materialSetup().field(),
+                "materialSetup().field()");
         return Objects.requireNonNull(materialField.materialIdByCell(), "materialIdByCell");
     }
 
-    private static double[] requireTemperatureField(SimulationCase simulationCase) {
-        TemperatureField temperatureField = Objects.requireNonNull(simulationCase.temperatureField(),
-                "temperatureField");
+    private static double[] requireTemperatureField(SimulationModel simulationCase) {
+        TemperatureField temperatureField = Objects.requireNonNull(simulationCase.temperatureSetup().field(),
+                "temperatureSetup().field()");
         return Objects.requireNonNull(temperatureField.temperatureCByCell(), "temperatureCByCell");
     }
 
-    private static BoundaryConditionLibrary requireBoundaryConditionLibrary(SimulationCase simulationCase) {
-        return Objects.requireNonNull(simulationCase.bcLibrary(), "bcLibrary");
+    private static BoundaryConditionLibrary requireBoundaryConditionLibrary(SimulationModel simulationCase) {
+        return Objects.requireNonNull(simulationCase.bcSetup().library(), "bcSetup().library()");
     }
 
     private void validateCellArrayLengths() {
@@ -144,8 +145,9 @@ public final class StefanEnthalpyCaseContext implements CaseContext {
         }
     }
 
-    private void initMaterialCache(SimulationCase simulationCase) {
-        MaterialLibrary materialLibrary = Objects.requireNonNull(simulationCase.materialLibrary(), "materialLibrary");
+    private void initMaterialCache(SimulationModel simulationCase) {
+        MaterialLibrary materialLibrary = Objects.requireNonNull(simulationCase.materialSetup().library(),
+                "materialSetup().library()");
 
         for (int i = 0; i < cellCount; i++) {
             int materialId = materialIdByCell[i];
@@ -160,11 +162,11 @@ public final class StefanEnthalpyCaseContext implements CaseContext {
         }
     }
 
-    private void initBoundaryConditions(SimulationCase simulationCase) {
-        Objects.requireNonNull(simulationCase.bcField(), "bcField");
+    private void initBoundaryConditions(SimulationModel simulationCase) {
+        Objects.requireNonNull(simulationCase.bcSetup().field(), "bcSetup().field()");
 
         for (Face face : Face.values()) {
-            int[] bcIdByFaceCell = simulationCase.bcField().raw(face);
+            int[] bcIdByFaceCell = simulationCase.bcSetup().field().raw(face);
             validateBoundaryConditionArrayLength(face, bcIdByFaceCell);
 
             BoundaryConditionType[] typeByFaceCell = new BoundaryConditionType[bcIdByFaceCell.length];
