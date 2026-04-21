@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import io.github.timurpechenkin.domain.grid.Grid2D;
+
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -22,6 +24,7 @@ import io.github.timurpechenkin.solver.recording.RecordingResult;
 import io.github.timurpechenkin.solver.recording.SamplePointSeries;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
 import io.github.timurpechenkin.time.TimeFormat;
+import io.github.timurpechenkin.output.image.*;
 
 public class OutputWriter {
     private final Path outDir;
@@ -84,6 +87,19 @@ public class OutputWriter {
             pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePointSeries.temperatureFrames(),
                     samplePoint.name() + "_temperature", timeFormat, numberFormat);
         }
+
+        // Рендер профилей
+        ProfileSeries profileSeries = result.profileSeries().get(0);
+        Grid2D grid2d = profileSeries.profile().grid2d();
+        TemperatureFrame2D frame = profileSeries.temperatureFrames()[0];
+        ProfileRenderSettings settings = ProfileRenderSettings.defaults(-10.0, 10.0);
+        ProfilePngWriter writer = new ProfilePngWriter();
+        writer.write(
+                profileDir.resolve(profileSeries.profile().name() + ".png"),
+                profileSeries,
+                frame,
+                settings,
+                grid2d);
 
     }
 }
