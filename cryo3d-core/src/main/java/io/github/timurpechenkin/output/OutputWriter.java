@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.github.timurpechenkin.domain.grid.Grid2D;
-
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -24,11 +22,14 @@ import io.github.timurpechenkin.solver.recording.RecordingResult;
 import io.github.timurpechenkin.solver.recording.SamplePointSeries;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
 import io.github.timurpechenkin.time.TimeFormat;
+import io.github.timurpechenkin.output.csv.PointCsvWriter;
+import io.github.timurpechenkin.output.csv.ProfileCsvWriter;
 import io.github.timurpechenkin.output.image.*;
 
 public class OutputWriter {
     private final Path outDir;
     private final ObjectMapper jsonMapper;
+    private final ProfilePngWriter profilePngWriter = new ProfilePngWriter();
     private final ProfileCsvWriter profileCsvWriter = new ProfileCsvWriter();
     private final PointCsvWriter pointCsvWriter = new PointCsvWriter();
 
@@ -67,36 +68,42 @@ public class OutputWriter {
             throws IOException {
         Path resultDir = outDir.resolve(caseName).resolve("result");
 
-        // Запись данных температур по профилям в csv
+        // Запись температур по профилям в CSV и PNG
+        ProfileRenderSettings settings = ProfileRenderSettings.defaults(-10.0, 10.0);
         Path profileDir = resultDir.resolve("profiles");
         for (ProfileSeries profileSeries : result.profileSeries()) {
             Profile profile = profileSeries.profile();
-            Grid2D grid2d = profile.grid2d();
             Path specialProfileDir = profileDir.resolve(profile.name());
-            for (TemperatureFrame2D temperatureFrames : profileSeries.temperatureFrames()) {
-                double[] temperatureCByCell = temperatureFrames.temperatureCByCell();
-                String time = format(temperatureFrames.seconds(), timeFormat);
-                profileCsvWriter.writeTemperatureProfileCsv(specialProfileDir, profile, temperatureCByCell,
-                        profile.name() + "_temperature_" + time, numberFormat);
-
-                // Рендер профилей
-                ProfileRenderSettings settings = ProfileRenderSettings.defaults(-10.0, 10.0);
-                ProfilePngWriter writer = new ProfilePngWriter();
-                writer.write(
-                        specialProfileDir.resolve(profileSeries.profile().name() + ".png"),
-                        profileSeries,
-                        temperatureFrames,
-                        settings,
-                        grid2d);
+            for (TemperatureFrame2D temperatureFrame : profileSeries.temperatureFrames()) {
+                double[] temperatureCByCell = temperatureFrame.temperatureCByCell();
+                String time = format(temperatureFrame.seconds(), timeFormat);
+                String fileName = profile.name() + "_temperature_" + time;
+                profileCsvWriter.writeTemperature(
+                        specialProfileDir,
+                        profile,
+                        temperatureCByCell,
+                        fileName,
+                        numberFormat);
+                profilePngWriter.writeTemperature(
+                        specialProfileDir,
+                        profile,
+                        temperatureFrame,
+                        fileName,
+                        numberFormat,
+                        settings);
             }
         }
 
-        // Запись данных температур по точкам в csv
+        // Запись данных температур по точкам в CSV
         Path pointDir = resultDir.resolve("points");
         for (SamplePointSeries samplePointSeries : result.pointSeries()) {
             SamplePoint samplePoint = samplePointSeries.samplePoint();
-            pointCsvWriter.writeTemperaturePointCsv(pointDir, samplePointSeries.temperatureFrames(),
-                    samplePoint.name() + "_temperature", timeFormat, numberFormat);
+            pointCsvWriter.writeTemperature(
+                    pointDir,
+                    samplePointSeries.temperatureFrames(),
+                    samplePoint.name() + "_temperature",
+                    timeFormat,
+                    numberFormat);
         }
     }
 }

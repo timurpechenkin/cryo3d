@@ -1,6 +1,7 @@
 package io.github.timurpechenkin.output.image;
 
 import static io.github.timurpechenkin.geometry.GeometryScale.scaledToMeters;
+import static io.github.timurpechenkin.number.NumberConverter.format;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -11,13 +12,12 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.util.Locale;
 import java.util.Objects;
 
 import io.github.timurpechenkin.domain.grid.Grid2D;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
 import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.geometry.Axis2D;
-import io.github.timurpechenkin.solver.recording.ProfileSeries;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
 
 /**
@@ -48,16 +48,17 @@ public final class ProfileSnapshotRenderer {
 
     private final TemperatureColorScale colorScale = new TemperatureColorScale();
 
-    public BufferedImage render(Grid2D grid2d,
-            ProfileSeries profileSeries,
+    public BufferedImage render(
+            Profile profile,
             TemperatureFrame2D frame,
+            NumberFormat numberFormat,
             ProfileRenderSettings settings) {
 
-        Objects.requireNonNull(profileSeries, "profileSeries must not be null");
         Objects.requireNonNull(frame, "frame must not be null");
         Objects.requireNonNull(settings, "settings must not be null");
+        Objects.requireNonNull(profile, "profile must not be null");
+        Objects.requireNonNull(numberFormat, "numberFormat must not be null");
 
-        Profile profile = Objects.requireNonNull(profileSeries.profile(), "profile must not be null");
         Grid2D grid = Objects.requireNonNull(profile.grid2d(), "profile.grid2d must not be null");
 
         validateFrameSize(grid, frame);
@@ -74,7 +75,7 @@ public final class ProfileSnapshotRenderer {
             g.setColor(BACKGROUND);
             g.fillRect(0, 0, image.getWidth(), image.getHeight());
 
-            Rectangle plotArea = buildPlotArea(grid2d, settings);
+            Rectangle plotArea = buildPlotArea(grid, settings);
             int legendX = plotArea.x + plotArea.width + LEGEND_GAP;
             int legendY = plotArea.y;
             int legendHeight = plotArea.height;
@@ -85,8 +86,8 @@ public final class ProfileSnapshotRenderer {
                 drawGrid(g, grid, plotArea);
             }
             drawPlotBorder(g, plotArea);
-            drawAxisLabels(g, grid, settings, plotArea);
-            drawLegend(g, settings, legendX, legendY, LEGEND_WIDTH, legendHeight);
+            drawAxisLabels(g, grid, settings, plotArea, numberFormat);
+            drawLegend(g, settings, legendX, legendY, LEGEND_WIDTH, legendHeight, numberFormat);
         } finally {
             g.dispose();
         }
@@ -239,20 +240,22 @@ public final class ProfileSnapshotRenderer {
             Graphics2D g,
             Grid2D grid,
             ProfileRenderSettings settings,
-            Rectangle plotArea) {
+            Rectangle plotArea,
+            NumberFormat numberFormat) {
 
         int[] wEdges = grid.edgesScaled(Axis2D.W);
         int[] hEdges = grid.edgesScaled(Axis2D.H);
 
-        drawWAxis(g, wEdges, settings.axisWLabel(), plotArea);
-        drawHAxis(g, hEdges, settings.axisHLabel(), plotArea);
+        drawWAxis(g, wEdges, settings.axisWLabel(), plotArea, numberFormat);
+        drawHAxis(g, hEdges, settings.axisHLabel(), plotArea, numberFormat);
     }
 
     private void drawWAxis(
             Graphics2D g,
             int[] wEdgesScaled,
             String label,
-            Rectangle plotArea) {
+            Rectangle plotArea,
+            NumberFormat numberFormat) {
 
         g.setColor(AXIS_COLOR);
         g.setFont(SMALL_FONT);
@@ -265,24 +268,26 @@ public final class ProfileSnapshotRenderer {
         if (drawAllTicks) {
             for (int edge : wEdgesScaled) {
                 int x = toPixel(edge, minW, maxW, plotArea.x, plotArea.width);
-                String text = formatMeters(scaledToMeters(edge));
+                String text = formatMeters(scaledToMeters(edge), numberFormat);
                 drawCenteredString(g, text, x, plotArea.y + plotArea.height + 22);
             }
         } else {
-            drawCenteredString(g, formatMeters(scaledToMeters(minW)), plotArea.x, plotArea.y + plotArea.height + 22);
-            drawCenteredString(g, formatMeters(scaledToMeters(maxW)), plotArea.x + plotArea.width,
+            drawCenteredString(g, formatMeters(scaledToMeters(minW), numberFormat), plotArea.x,
+                    plotArea.y + plotArea.height + 22);
+            drawCenteredString(g, formatMeters(scaledToMeters(maxW), numberFormat), plotArea.x + plotArea.width,
                     plotArea.y + plotArea.height + 22);
         }
 
         g.setFont(LABEL_FONT);
-        drawCenteredString(g, label, plotArea.x + plotArea.width / 2, plotArea.y + plotArea.height + 52);
+        drawCenteredString(g, label, plotArea.x + plotArea.width / 2, plotArea.y - 20);
     }
 
     private void drawHAxis(
             Graphics2D g,
             int[] hEdgesScaled,
             String label,
-            Rectangle plotArea) {
+            Rectangle plotArea,
+            NumberFormat numberFormat) {
 
         g.setColor(AXIS_COLOR);
         g.setFont(SMALL_FONT);
@@ -295,12 +300,13 @@ public final class ProfileSnapshotRenderer {
         if (drawAllTicks) {
             for (int edge : hEdgesScaled) {
                 int y = toPixel(edge, minH, maxH, plotArea.y, plotArea.height);
-                String text = formatMeters(scaledToMeters(edge));
+                String text = formatMeters(scaledToMeters(edge), numberFormat);
                 drawRightAlignedString(g, text, plotArea.x - 10, y + 4);
             }
         } else {
-            drawRightAlignedString(g, formatMeters(scaledToMeters(minH)), plotArea.x - 10, plotArea.y + 4);
-            drawRightAlignedString(g, formatMeters(scaledToMeters(maxH)), plotArea.x - 10,
+            drawRightAlignedString(g, formatMeters(scaledToMeters(minH), numberFormat), plotArea.x - 10,
+                    plotArea.y + 4);
+            drawRightAlignedString(g, formatMeters(scaledToMeters(maxH), numberFormat), plotArea.x - 10,
                     plotArea.y + plotArea.height + 4);
         }
 
@@ -322,7 +328,8 @@ public final class ProfileSnapshotRenderer {
             int x,
             int y,
             int width,
-            int height) {
+            int height,
+            NumberFormat numberFormat) {
 
         for (int py = 0; py < height; py++) {
             double t = 1.0 - ((double) py / Math.max(1, height - 1));
@@ -343,8 +350,8 @@ public final class ProfileSnapshotRenderer {
         g.setFont(SMALL_FONT);
         g.setColor(AXIS_COLOR);
 
-        g.drawString(formatTemperature(settings.maxTemperatureC()), x + width + 8, y + 10);
-        g.drawString(formatTemperature(settings.minTemperatureC()), x + width + 8, y + height);
+        g.drawString(formatTemperature(settings.maxTemperatureC(), numberFormat), x + width + 8, y + 10);
+        g.drawString(formatTemperature(settings.minTemperatureC(), numberFormat), x + width + 8, y + height);
         g.drawString("T, °C", x - 2, y - 10);
     }
 
@@ -357,12 +364,12 @@ public final class ProfileSnapshotRenderer {
         return pixelStart + (int) Math.round(t * pixelSpan);
     }
 
-    private String formatMeters(double meters) {
-        return String.format(Locale.US, "%.2f", meters);
+    private String formatMeters(double meters, NumberFormat numberFormat) {
+        return format(meters, numberFormat);
     }
 
-    private String formatTemperature(double valueC) {
-        return String.format(Locale.US, "%.1f °C", valueC);
+    private String formatTemperature(double valueC, NumberFormat numberFormat) {
+        return format(valueC, numberFormat) + " °C";
     }
 
     private void drawCenteredString(Graphics2D g, String text, int centerX, int baselineY) {

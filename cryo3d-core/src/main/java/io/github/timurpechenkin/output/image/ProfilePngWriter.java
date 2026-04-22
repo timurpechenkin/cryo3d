@@ -1,6 +1,8 @@
 package io.github.timurpechenkin.output.image;
 
-import io.github.timurpechenkin.domain.grid.Grid2D;
+import io.github.timurpechenkin.domain.presentation.NumberFormat;
+import io.github.timurpechenkin.domain.recording.Profile;
+
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,7 +11,6 @@ import java.util.Objects;
 
 import javax.imageio.ImageIO;
 
-import io.github.timurpechenkin.solver.recording.ProfileSeries;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
 
 /**
@@ -27,23 +28,23 @@ public final class ProfilePngWriter {
         this.renderer = Objects.requireNonNull(renderer, "renderer must not be null");
     }
 
-    public void write(
-            Path file,
-            ProfileSeries profileSeries,
+    public void writeTemperature(
+            Path outDir,
+            Profile profile,
             TemperatureFrame2D frame,
-            ProfileRenderSettings settings, Grid2D grid2d) throws IOException {
+            String fileName,
+            NumberFormat format,
+            ProfileRenderSettings settings) throws IOException {
 
-        Objects.requireNonNull(file, "file must not be null");
-        Objects.requireNonNull(profileSeries, "profileSeries must not be null");
+        Objects.requireNonNull(outDir, "file must not be null");
+        Objects.requireNonNull(profile, "profile must not be null");
         Objects.requireNonNull(frame, "frame must not be null");
         Objects.requireNonNull(settings, "settings must not be null");
 
-        Path parent = file.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
+        Files.createDirectories(outDir);
+        Path file = outDir.resolve(fileName + ".png");
 
-        BufferedImage image = renderer.render(grid2d, profileSeries, frame, settings);
+        BufferedImage image = renderer.render(profile, frame, format, settings);
 
         boolean written = ImageIO.write(image, "png", file.toFile());
         if (!written) {

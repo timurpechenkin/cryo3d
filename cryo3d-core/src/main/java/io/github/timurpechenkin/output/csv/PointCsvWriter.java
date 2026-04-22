@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.output;
+package io.github.timurpechenkin.output.csv;
 
 import static io.github.timurpechenkin.number.NumberConverter.format;
 import static io.github.timurpechenkin.time.TimeConverter.format;
@@ -14,7 +14,7 @@ import io.github.timurpechenkin.time.TimeFormat;
 public class PointCsvWriter {
     private static final int MAX_WARNINGS = 20;
 
-    public void writeTemperaturePointCsv(
+    public void writeTemperature(
             Path outDir,
             TemperatureFrame0D[] temperatureFrames,
             String pointName,

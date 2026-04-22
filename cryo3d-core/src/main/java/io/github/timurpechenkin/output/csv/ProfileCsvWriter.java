@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.output;
+package io.github.timurpechenkin.output.csv;
 
 import static io.github.timurpechenkin.geometry.GeometryScale.scaled2ToMeters;
 import static io.github.timurpechenkin.number.NumberConverter.format;
@@ -96,7 +96,7 @@ public final class ProfileCsvWriter {
         }
     }
 
-    public void writeTemperatureProfileCsv(
+    public void writeTemperature(
             Path outDir,
             Profile profile,
             double[] temperatureCProfile,

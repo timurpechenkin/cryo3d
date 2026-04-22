@@ -1,4 +1,4 @@
-package io.github.timurpechenkin.output;
+package io.github.timurpechenkin.output.csv;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
