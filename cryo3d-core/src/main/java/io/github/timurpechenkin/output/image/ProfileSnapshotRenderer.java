@@ -35,7 +35,7 @@ public final class ProfileSnapshotRenderer {
     static final int BOTTOM_MARGIN = 110;
 
     static final int LEGEND_WIDTH = 24;
-    static final int LEGEND_GAP = 24;
+    static final int LEGEND_GAP = 48;
 
     private static final Color BACKGROUND = Color.WHITE;
     private static final Color GRID_COLOR = new Color(30, 30, 30, 180);
@@ -272,14 +272,12 @@ public final class ProfileSnapshotRenderer {
                 drawCenteredString(g, text, x, plotArea.y + plotArea.height + 22);
             }
         } else {
-            drawCenteredString(g, formatMeters(scaledToMeters(minW), numberFormat), plotArea.x,
-                    plotArea.y + plotArea.height + 22);
             drawCenteredString(g, formatMeters(scaledToMeters(maxW), numberFormat), plotArea.x + plotArea.width,
-                    plotArea.y + plotArea.height + 22);
+                    plotArea.y - 10);
         }
 
         g.setFont(LABEL_FONT);
-        drawCenteredString(g, label, plotArea.x + plotArea.width / 2, plotArea.y - 20);
+        drawCenteredString(g, label, plotArea.x + plotArea.width / 2, plotArea.y - 15);
     }
 
     private void drawHAxis(
@@ -315,7 +313,7 @@ public final class ProfileSnapshotRenderer {
         try {
             g.rotate(-Math.PI / 2.0);
             int labelX = -(plotArea.y + plotArea.height / 2);
-            int labelY = plotArea.x - 68;
+            int labelY = plotArea.x - 20;
             drawCenteredString(g, label, labelX, labelY);
         } finally {
             g.setTransform(oldTransform);
@@ -350,9 +348,9 @@ public final class ProfileSnapshotRenderer {
         g.setFont(SMALL_FONT);
         g.setColor(AXIS_COLOR);
 
-        g.drawString(formatTemperature(settings.maxTemperatureC(), numberFormat), x + width + 8, y + 10);
-        g.drawString(formatTemperature(settings.minTemperatureC(), numberFormat), x + width + 8, y + height);
         g.drawString("T, °C", x - 2, y - 10);
+
+        drawLegendTicks(g, settings, numberFormat, x, y, width, height);
     }
 
     private int toPixel(int value, int min, int max, int pixelStart, int pixelSpan) {
@@ -382,5 +380,51 @@ public final class ProfileSnapshotRenderer {
         FontMetrics fm = g.getFontMetrics();
         int x = rightX - fm.stringWidth(text);
         g.drawString(text, x, baselineY);
+    }
+
+    private void drawLegendTicks(
+            Graphics2D g,
+            ProfileRenderSettings settings,
+            NumberFormat numberFormat,
+            int x,
+            int y,
+            int width,
+            int height) {
+
+        double min = settings.minTemperatureC();
+        double max = settings.maxTemperatureC();
+        double range = max - min;
+
+        double[] values = new double[] {
+                max,
+                min + 0.75 * range,
+                min + 0.50 * range,
+                min + 0.25 * range,
+                min
+        };
+
+        for (double value : values) {
+            int yTick = legendY(value, min, max, y, height);
+
+            // маленькая риска справа от шкалы
+            g.drawLine(x + width, yTick, x + width + 6, yTick);
+
+            // подпись температуры
+            g.drawString(
+                    formatTemperature(value, numberFormat),
+                    x + width + 10,
+                    yTick + 4);
+        }
+    }
+
+    private int legendY(double value, double min, double max, int legendTop, int legendHeight) {
+        if (max == min) {
+            return legendTop + legendHeight / 2;
+        }
+
+        double t = (value - min) / (max - min);
+        double invertedT = 1.0 - t;
+
+        return legendTop + (int) Math.round(invertedT * legendHeight);
     }
 }
