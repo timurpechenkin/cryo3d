@@ -18,7 +18,7 @@ import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.domain.recording.SamplePoint;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 import io.github.timurpechenkin.solver.recording.ProfileSeries;
-import io.github.timurpechenkin.solver.recording.RecordingResult;
+import io.github.timurpechenkin.solver.recording.SimulationRecording;
 import io.github.timurpechenkin.solver.recording.SamplePointSeries;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
 import io.github.timurpechenkin.time.TimeFormat;
@@ -64,7 +64,8 @@ public class OutputWriter {
         }
     }
 
-    public void writeResult(RecordingResult result, String caseName, TimeFormat timeFormat, NumberFormat numberFormat)
+    public void writeResult(SimulationRecording result, String caseName, TimeFormat timeFormat,
+            NumberFormat numberFormat)
             throws IOException {
         Path resultDir = outDir.resolve(caseName).resolve("result");
 

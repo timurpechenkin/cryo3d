@@ -3,9 +3,12 @@ package io.github.timurpechenkin.commands;
 import java.nio.file.Path;
 
 import io.github.timurpechenkin.app.DefaultSimulationRunService;
+import io.github.timurpechenkin.app.PreparationStatus;
 import io.github.timurpechenkin.app.RunStatus;
+import io.github.timurpechenkin.app.SimulationPreparationReport;
 import io.github.timurpechenkin.app.SimulationRunReport;
 import io.github.timurpechenkin.app.SimulationRunService;
+import io.github.timurpechenkin.app.PreparedSimulationCase;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -21,18 +24,27 @@ public class RunCommand implements Runnable {
     @Override
     public void run() {
         SimulationRunService runService = new DefaultSimulationRunService();
-        SimulationRunReport report = runService.run(casePath, outDir);
 
-        if (report.status() == RunStatus.SUCCESS) {
-            System.out.println("OK: processed " + report.casePath());
+        SimulationPreparationReport preparationReport = runService.prepare(casePath);
+        if (preparationReport.status() == PreparationStatus.VALIDATION_FAILED) {
+            System.out.println("ERROR: case validation is invalid:");
+            preparationReport.validationErrors()
+                    .forEach(error -> System.out.println("- " + error.path() + ": " + error.message()));
+            System.exit(2);
+            return;
+        }
+        if (preparationReport.status() == PreparationStatus.FAILED) {
+            System.out.println("ERROR: case preparation is failed:");
+            System.out.println("- " + preparationReport.errorMessage());
+            System.exit(2);
             return;
         }
 
-        if (report.status() == RunStatus.VALIDATION_FAILED) {
-            System.out.println("ERROR: case is invalid:");
-            report.validationErrors()
-                    .forEach(error -> System.out.println("- " + error.path() + ": " + error.message()));
-            System.exit(2);
+        PreparedSimulationCase preparedSimulationCase = preparationReport.preparedCase();
+        SimulationRunReport report = runService.run(preparedSimulationCase, outDir);
+
+        if (report.status() == RunStatus.SUCCESS) {
+            System.out.println("OK: processed " + report.casePath());
             return;
         }
 

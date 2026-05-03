@@ -17,7 +17,7 @@ import io.github.timurpechenkin.solver.progress.SimulationProgress;
 import io.github.timurpechenkin.solver.progress.SimulationProgressListener;
 import io.github.timurpechenkin.solver.metadata.SimulationMetadata;
 import io.github.timurpechenkin.solver.recording.RecordingAccumulator;
-import io.github.timurpechenkin.solver.recording.RecordingResult;
+import io.github.timurpechenkin.solver.recording.SimulationRecording;
 
 /**
  * Базовая реализация {@link CaseSolver}.
@@ -32,7 +32,7 @@ import io.github.timurpechenkin.solver.recording.RecordingResult;
  * <li>на каждом шаге вызывает {@link StepCalculator};</li>
  * <li>сохраняет выбранные состояния системы через
  * {@link RecordingAccumulator};</li>
- * <li>формирует итоговый {@link RecordingResult}.</li>
+ * <li>формирует итоговый {@link SimulationRecording}.</li>
  * </ol>
  *
  * <p>
@@ -115,7 +115,7 @@ public final class DefaultCaseSolver implements CaseSolver {
 
             SimulationDefinitionCollector definitionCollector = new SimulationDefinitionCollector(simulationCase);
             SimulationDefinition definition = definitionCollector.definition();
-            RecordingResult recording = accumulator.build();
+            SimulationRecording recording = accumulator.build();
             SimulationMetadata metadata = metadataCollector.metadata();
             progressListener.onFinish();
             return new SimulationResult(metadata, definition, recording);

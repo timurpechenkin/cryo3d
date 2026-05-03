@@ -3,14 +3,18 @@ package io.github.timurpechenkin.commands;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
 import io.github.timurpechenkin.app.DefaultSimulationRunService;
+import io.github.timurpechenkin.app.PreparationStatus;
 import io.github.timurpechenkin.app.RunStatus;
+import io.github.timurpechenkin.app.SimulationPreparationReport;
 import io.github.timurpechenkin.app.SimulationRunReport;
 import io.github.timurpechenkin.app.SimulationRunService;
+import io.github.timurpechenkin.app.PreparedSimulationCase;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -35,29 +39,58 @@ public final class QueueCommand implements Runnable {
                 return;
             }
 
-            SimulationRunService runService = new DefaultSimulationRunService();
-
             int total = caseFiles.size();
             int successCount = 0;
             int failedCount = 0;
 
             System.out.println("Found " + total + " case file(s).");
 
-            for (int i = 0; i < caseFiles.size(); i++) {
-                Path casePath = caseFiles.get(i);
-                System.out.println();
-                System.out.println("[" + (i + 1) + "/" + total + "] Processing " + casePath.getFileName());
+            SimulationRunService runService = new DefaultSimulationRunService();
+            List<SimulationPreparationReport> preparationReports = new ArrayList<>();
+            List<SimulationPreparationReport> failedReports = new ArrayList<>();
 
-                SimulationRunReport report = runService.run(casePath, outDir);
+            for (Path casePath : caseFiles) {
+                SimulationPreparationReport report = runService.prepare(casePath);
+                if (report.status() == PreparationStatus.VALIDATION_FAILED
+                        || report.status() == PreparationStatus.FAILED) {
+                    failedReports.add(report);
+                } else {
+                    preparationReports.add(report);
+                }
+            }
+
+            System.out.println();
+
+            if (!failedReports.isEmpty()) {
+                System.out.println("Queue preparation failed. No simulations were started.");
+                for (SimulationPreparationReport report : failedReports) {
+                    if (report.status() == PreparationStatus.VALIDATION_FAILED) {
+                        System.out.println("VALIDATION FAILED: " + report.preparedCase().path());
+                        report.validationErrors()
+                                .forEach(error -> System.out.println("- " + error.path() + ": " + error.message()));
+                    } else if (report.status() == PreparationStatus.FAILED) {
+                        System.out.println("FAILED TO PREPARE: " + report.preparedCase().path());
+                        System.out.println("- " + report.errorMessage());
+                    }
+                }
+
+                System.exit(2);
+                return;
+            }
+
+            System.out.println("Queue preparation success.");
+
+            for (int i = 0; i < preparationReports.size(); i++) {
+                PreparedSimulationCase preparationReport = preparationReports.get(i).preparedCase();
+                System.out.println();
+                System.out.println(
+                        "[" + (i + 1) + "/" + total + "] Processing " + preparationReport.path().getFileName());
+
+                SimulationRunReport report = runService.run(preparationReport, outDir);
 
                 if (report.status() == RunStatus.SUCCESS) {
                     successCount++;
                     System.out.println("OK: " + report.casePath());
-                } else if (report.status() == RunStatus.VALIDATION_FAILED) {
-                    failedCount++;
-                    System.out.println("INVALID: " + report.casePath());
-                    report.validationErrors()
-                            .forEach(error -> System.out.println("- " + error.path() + ": " + error.message()));
                 } else {
                     failedCount++;
                     System.out.println("FAILED: " + report.casePath());

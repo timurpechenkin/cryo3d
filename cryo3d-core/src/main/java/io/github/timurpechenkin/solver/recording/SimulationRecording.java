@@ -19,7 +19,7 @@ import java.util.List;
  * @param pointSeries   история температур по контрольным точкам
  * @param profileSeries история температур по профилям
  */
-public record RecordingResult(
-        List<SamplePointSeries> pointSeries,
-        List<ProfileSeries> profileSeries) {
+public record SimulationRecording(
+                List<SamplePointSeries> pointSeries,
+                List<ProfileSeries> profileSeries) {
 }

@@ -1,7 +1,7 @@
 package io.github.timurpechenkin.solver;
 
 import io.github.timurpechenkin.domain.SimulationCase;
-import io.github.timurpechenkin.solver.recording.RecordingResult;
+import io.github.timurpechenkin.solver.recording.SimulationRecording;
 
 /**
  * Выполняет полный расчёт задачи теплопереноса.
@@ -19,7 +19,7 @@ import io.github.timurpechenkin.solver.recording.RecordingResult;
  * <li>на каждом шаге применяется численная схема
  * (см. {@code StepCalculator});</li>
  * <li>состояние системы последовательно обновляется;</li>
- * <li>результаты сохраняются и агрегируются в {@link RecordingResult}.</li>
+ * <li>результаты сохраняются и агрегируются в {@link SimulationRecording}.</li>
  * </ul>
  *
  * <p>

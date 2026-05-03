@@ -174,7 +174,7 @@ public final class RecordingAccumulator {
      *
      * @return итоговый результат расчёта
      */
-    public RecordingResult build() {
+    public SimulationRecording build() {
         List<SamplePointSeries> pointSeries = new ArrayList<>(samplePoints.size());
         for (int p = 0; p < samplePoints.size(); p++) {
             TemperatureFrame0D[] temperatureFrames = pointTemperatureFrames[p];
@@ -191,7 +191,7 @@ public final class RecordingAccumulator {
                     temperatureFrame2Ds));
         }
 
-        return new RecordingResult(
+        return new SimulationRecording(
                 pointSeries,
                 profileSeries);
     }
