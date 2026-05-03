@@ -17,8 +17,8 @@ import io.github.timurpechenkin.domain.presentation.PresentationSettings;
 import io.github.timurpechenkin.domain.recording.Profile;
 import io.github.timurpechenkin.domain.recording.SamplePoint;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
+import io.github.timurpechenkin.solver.SimulationResult;
 import io.github.timurpechenkin.solver.recording.ProfileSeries;
-import io.github.timurpechenkin.solver.recording.SimulationRecording;
 import io.github.timurpechenkin.solver.recording.SamplePointSeries;
 import io.github.timurpechenkin.solver.recording.TemperatureFrame2D;
 import io.github.timurpechenkin.time.TimeFormat;
@@ -43,20 +43,20 @@ public class OutputWriter {
                 .build();
     }
 
-    public void writeSummary(SimulationCase c, String caseName) throws IOException {
-        Path startDir = outDir.resolve(caseName).resolve("definition");
+    public void writeSummary(SimulationCase simulationCase, String caseDirName) throws IOException {
+        Path startDir = outDir.resolve(caseDirName).resolve("definition");
         Files.createDirectories(startDir);
 
-        SimulationSummary summary = SummaryCalculator.calculate(c);
+        SimulationSummary summary = SummaryCalculator.calculate(simulationCase);
 
         Path file = startDir.resolve("summary.json");
         jsonMapper.writeValue(file.toFile(), summary);
 
-        TemperatureField temperatureField = c.model().temperatureSetup().field();
-        MaterialField materialField = c.model().materialSetup().field();
-        MaterialLibrary materialLibrary = c.model().materialSetup().library();
-        PresentationSettings presentationSettings = c.presentation();
-        for (Profile profile : c.recording().profiles()) {
+        TemperatureField temperatureField = simulationCase.model().temperatureSetup().field();
+        MaterialField materialField = simulationCase.model().materialSetup().field();
+        MaterialLibrary materialLibrary = simulationCase.model().materialSetup().library();
+        PresentationSettings presentationSettings = simulationCase.presentation();
+        for (Profile profile : simulationCase.recording().profiles()) {
             profileCsvWriter.writeMaterialGridCsv(startDir, profile, materialField.materialIdByCell(),
                     materialLibrary, profile.name() + "_material_0");
             profileCsvWriter.writeTemperatureGridCsv(startDir, profile, temperatureField.temperatureCByCell(),
@@ -64,15 +64,16 @@ public class OutputWriter {
         }
     }
 
-    public void writeResult(SimulationRecording result, String caseName, TimeFormat timeFormat,
-            NumberFormat numberFormat)
+    public void writeResult(SimulationCase simulationCase, SimulationResult result, String caseDirName)
             throws IOException {
-        Path resultDir = outDir.resolve(caseName).resolve("result");
+        TimeFormat timeFormat = simulationCase.presentation().timeFormat();
+        NumberFormat numberFormat = simulationCase.presentation().numberFormat();
+        Path resultDir = outDir.resolve(caseDirName).resolve("result");
 
         // Запись температур по профилям в CSV и PNG
         ProfileRenderSettings settings = ProfileRenderSettings.defaults(-10.0, 10.0);
         Path profileDir = resultDir.resolve("profiles");
-        for (ProfileSeries profileSeries : result.profileSeries()) {
+        for (ProfileSeries profileSeries : result.recording().profileSeries()) {
             Profile profile = profileSeries.profile();
             Path specialProfileDir = profileDir.resolve(profile.name());
             for (TemperatureFrame2D temperatureFrame : profileSeries.temperatureFrames()) {
@@ -97,7 +98,7 @@ public class OutputWriter {
 
         // Запись данных температур по точкам в CSV
         Path pointDir = resultDir.resolve("points");
-        for (SamplePointSeries samplePointSeries : result.pointSeries()) {
+        for (SamplePointSeries samplePointSeries : result.recording().pointSeries()) {
             SamplePoint samplePoint = samplePointSeries.samplePoint();
             pointCsvWriter.writeTemperature(
                     pointDir,

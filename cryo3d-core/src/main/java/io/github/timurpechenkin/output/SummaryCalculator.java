@@ -17,7 +17,7 @@ import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.material.MaterialSetup;
-import io.github.timurpechenkin.domain.metadata.CaseMetadata;
+import io.github.timurpechenkin.domain.metadata.SimulatioMetadata;
 import io.github.timurpechenkin.domain.temperature.TemperatureField;
 import io.github.timurpechenkin.domain.temperature.TemperatureSetup;
 import io.github.timurpechenkin.geometry.Axis3D;
@@ -34,7 +34,7 @@ public final class SummaryCalculator {
     }
 
     public static SimulationSummary calculate(SimulationCase simulationCase) {
-        CaseMetadata metadata = simulationCase.metadata();
+        SimulatioMetadata metadata = simulationCase.metadata();
         SimulationModel c = simulationCase.model();
         GridStats gridStats = gridStats(c.grid());
         MaterialStats materialStats = materialStats(c.materialSetup());

@@ -1,4 +1,4 @@
 package io.github.timurpechenkin.domain.metadata;
 
-public record CaseMetadata(String caseName) {
+public record SimulatioMetadata(String caseName) {
 }

@@ -11,14 +11,11 @@ import io.github.timurpechenkin.casefile.CaseValidator;
 import io.github.timurpechenkin.casefile.dto.SimulationCaseDto;
 import io.github.timurpechenkin.casefile.validation.ValidationResult;
 import io.github.timurpechenkin.domain.SimulationCase;
-import io.github.timurpechenkin.domain.metadata.CaseMetadata;
-import io.github.timurpechenkin.domain.presentation.NumberFormat;
+import io.github.timurpechenkin.domain.metadata.SimulatioMetadata;
 import io.github.timurpechenkin.output.OutputWriter;
 import io.github.timurpechenkin.progress.ConsoleProgressListener;
 import io.github.timurpechenkin.solver.CaseSolverFactory;
 import io.github.timurpechenkin.solver.SimulationResult;
-import io.github.timurpechenkin.solver.recording.SimulationRecording;
-import io.github.timurpechenkin.time.TimeFormat;
 
 public final class DefaultSimulationRunService implements SimulationRunService {
 
@@ -39,23 +36,17 @@ public final class DefaultSimulationRunService implements SimulationRunService {
         Path casePath = preparedCase.path();
 
         try {
-            CaseMetadata metadata = simulationCase.metadata();
+            SimulatioMetadata metadata = simulationCase.metadata();
 
             OutputWriter writer = new OutputWriter(outDir);
-            String caseName = metadata.caseName() + "_" + formatter.format(LocalDateTime.now());
-
-            writer.writeSummary(simulationCase, caseName);
+            String caseDirName = metadata.caseName() + "_" + formatter.format(LocalDateTime.now());
+            writer.writeSummary(simulationCase, caseDirName);
 
             SimulationResult result = solverFactory
                     .create(simulationCase, consoleProgressListener, targetProgressUpdates).solve();
+            writer.writeResult(simulationCase, result, caseDirName);
 
-            SimulationRecording recording = result.recording();
-            TimeFormat timeFormat = result.metadata().timeFormat();
-            NumberFormat numberFormat = result.metadata().numberFormat();
-
-            writer.writeResult(recording, caseName, timeFormat, numberFormat);
-
-            return SimulationRunReport.success(casePath, metadata.caseName(), caseName);
+            return SimulationRunReport.success(casePath, metadata.caseName(), caseDirName);
 
         } catch (Exception ex) {
             return SimulationRunReport.failed(casePath, ex);

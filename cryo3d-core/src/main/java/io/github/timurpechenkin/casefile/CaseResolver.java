@@ -33,7 +33,7 @@ import io.github.timurpechenkin.domain.material.Material;
 import io.github.timurpechenkin.domain.material.MaterialField;
 import io.github.timurpechenkin.domain.material.MaterialLibrary;
 import io.github.timurpechenkin.domain.material.MaterialSetup;
-import io.github.timurpechenkin.domain.metadata.CaseMetadata;
+import io.github.timurpechenkin.domain.metadata.SimulatioMetadata;
 import io.github.timurpechenkin.domain.SimulationModel;
 import io.github.timurpechenkin.domain.presentation.NumberFormat;
 import io.github.timurpechenkin.domain.presentation.PresentationSettings;
@@ -94,7 +94,7 @@ public final class CaseResolver {
         RecordingSettings recording = new RecordingSettings(profiles, samplePoints);
 
         // 3) metadata
-        CaseMetadata metadata = new CaseMetadata(dto.caseName());
+        SimulatioMetadata metadata = new SimulatioMetadata(dto.caseName());
 
         // 4) solver + presentation
         SolverSettings solver = resolveSolverSettings(dto.config());

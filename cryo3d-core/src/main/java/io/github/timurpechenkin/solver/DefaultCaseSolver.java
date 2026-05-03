@@ -10,12 +10,10 @@ import io.github.timurpechenkin.domain.time.TimeSettings;
 import io.github.timurpechenkin.solver.calculator.StepCalculator;
 import io.github.timurpechenkin.solver.context.CaseContext;
 import io.github.timurpechenkin.solver.context.CaseContextFactory;
-import io.github.timurpechenkin.solver.info.SimulationDefinition;
-import io.github.timurpechenkin.solver.info.SimulationDefinitionCollector;
-import io.github.timurpechenkin.solver.metadata.SimulationMetadataCollector;
+import io.github.timurpechenkin.solver.info.SolverRunInfo;
+import io.github.timurpechenkin.solver.metadata.RunInfoCollector;
 import io.github.timurpechenkin.solver.progress.SimulationProgress;
 import io.github.timurpechenkin.solver.progress.SimulationProgressListener;
-import io.github.timurpechenkin.solver.metadata.SimulationMetadata;
 import io.github.timurpechenkin.solver.recording.RecordingAccumulator;
 import io.github.timurpechenkin.solver.recording.SimulationRecording;
 
@@ -95,10 +93,11 @@ public final class DefaultCaseSolver implements CaseSolver {
         long dtSeconds = time.dtSeconds();
 
         RecordingAccumulator accumulator = new RecordingAccumulator(recordingSettings, steps);
-        SimulationMetadataCollector metadataCollector = new SimulationMetadataCollector(simulationCase);
+        RunInfoCollector infoCollector = new RunInfoCollector(simulationCase);
 
         try {
             progressListener.onStart(steps);
+            infoCollector.addStepCount(steps);
             accumulator.recordStep(0, 0, context.currentTemperatureByCell());
             progressListener.onProgress(new SimulationProgress(0, steps, 0, 0.0));
             int reportEverySteps = computeReportEverySteps(steps, targetProgressUpdates);
@@ -113,12 +112,10 @@ public final class DefaultCaseSolver implements CaseSolver {
                 }
             }
 
-            SimulationDefinitionCollector definitionCollector = new SimulationDefinitionCollector(simulationCase);
-            SimulationDefinition definition = definitionCollector.definition();
             SimulationRecording recording = accumulator.build();
-            SimulationMetadata metadata = metadataCollector.metadata();
+            SolverRunInfo runInfo = infoCollector.info();
             progressListener.onFinish();
-            return new SimulationResult(metadata, definition, recording);
+            return new SimulationResult(recording, runInfo);
 
         } catch (Exception ex) {
             progressListener.onError(ex);
